@@ -1,19 +1,21 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import "./FoodItem.css";
 import { StoreContext } from "../../contexts/StoreContext";
 
-const FoodItem = ({ id, name, price, description, image, isNew }) => {
+const FoodItem = ({ id, name, price, description, image, onClick }) => {
   const { addToCart, url } = useContext(StoreContext);
+  const [loaded, setLoaded] = useState(false);
 
   return (
-    <div className="food-item">
+    <div className="food-item" onClick={onClick}>
       <div className="food-item-img-container">
+        {!loaded && <div className="skeleton skeleton-img" />}
         <img
-          className="food-item-img"
-          src={url + "/images/" + image}
+          className={`food-item-img ${loaded ? "visible" : "hidden"}`}
+          src={`${url}/images/${image}`}
           alt={name}
+          onLoad={() => setLoaded(true)}
         />
-        {isNew && <span className="food-item-badge">New</span>}
       </div>
 
       <div className="food-item-info">
@@ -33,7 +35,10 @@ const FoodItem = ({ id, name, price, description, image, isNew }) => {
 
           <button
             className="food-item-add-btn"
-            onClick={() => addToCart(id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              addToCart(id);
+            }}
             aria-label="Thêm vào giỏ"
           >
             +

@@ -1,23 +1,21 @@
 import React, { useContext, useState } from "react";
 import "./FoodDisplay.css";
 import { StoreContext } from "../../contexts/StoreContext";
-import FoodSection from "../FoodSection/FoodSection";
+import FoodItem from "../FoodItem/FoodItem";
 import FoodPopup from "../FoodPopup/FoodPopup";
+import bannerDefault from "/Pizza.png";
 
 const FoodDisplay = ({ category }) => {
   const { food_list } = useContext(StoreContext);
-  const [showPopup, setShowPopup] = useState(false);
   const [selectedFood, setSelectedFood] = useState(null);
+  const [showPopup, setShowPopup] = useState(false);
 
-  // Nếu dữ liệu chưa sẵn sàng
   if (!Array.isArray(food_list) || food_list.length === 0) {
     return <p className="loading-text">Đang tải thực đơn...</p>;
   }
 
-  // Lấy danh sách danh mục duy nhất
+  // Danh mục
   const categories = [...new Set(food_list.map((f) => f.category))];
-
-  // Nếu đang chọn danh mục cụ thể thì chỉ hiển thị danh mục đó
   const filteredCategories =
     category === "All" ? categories : categories.filter((c) => c === category);
 
@@ -27,30 +25,40 @@ const FoodDisplay = ({ category }) => {
     setShowPopup(true);
   };
 
-  // Khi đóng popup
-  const handleClosePopup = () => {
-    setShowPopup(false);
-    setSelectedFood(null);
-  };
-
   return (
     <div className="food-display">
-      <h2 className="food-display-title">Thực Đơn</h2>
-
       {filteredCategories.map((cat) => {
         const items = food_list.filter((item) => item.category === cat);
         return (
-          <FoodSection
-            key={cat}
-            category={cat}
-            items={items}
-            onFoodClick={handleFoodClick}
-          />
+          <section key={cat} className="food-section">
+            <h2 className="food-section-title">{cat}</h2>
+
+            {/* Banner */}
+            <div className="food-section-banner">
+              <img src={bannerDefault} alt={`Banner ${cat}`} />
+            </div>
+
+            {/* Grid 2 cột */}
+            <div className="food-grid-two">
+              {items.map((food) => (
+                <FoodItem
+                  key={food._id}
+                  id={food._id}
+                  name={food.name}
+                  description={food.description}
+                  price={food.price}
+                  image={food.image}
+                  onClick={() => handleFoodClick(food)}
+                />
+              ))}
+            </div>
+          </section>
         );
       })}
 
+      {/* Popup hiển thị khi click */}
       {showPopup && selectedFood && (
-        <FoodPopup food={selectedFood} onClose={handleClosePopup} />
+        <FoodPopup food={selectedFood} onClose={() => setShowPopup(false)} />
       )}
     </div>
   );
