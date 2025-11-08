@@ -1,0 +1,148 @@
+.cart-items-container {
+  width: 100%;
+  background: #fff;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  margin-bottom: 2.5rem;
+  transition: 0.3s ease;
+}
+
+.cart-items-container:hover {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+/* --- Tiêu đề cột --- */
+.cart-items-title {
+  display: grid;
+  grid-template-columns: 1.2fr 2fr 1fr 1fr 1fr 0.5fr;
+  align-items: center;
+  font-weight: 600;
+  color: #333;
+  padding: 1rem 1.25rem;
+  background: #f9f9f9;
+  border-radius: 10px;
+  font-size: 0.95rem;
+}
+
+/* --- Hàng sản phẩm --- */
+.cart-items-row {
+  display: grid;
+  grid-template-columns: 1.2fr 2fr 1fr 1fr 1fr 0.5fr;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.2rem 1rem;
+  border-bottom: 1px solid #eee;
+  transition: background 0.2s ease;
+}
+
+.cart-items-row:hover {
+  background: #fafafa;
+}
+
+.cart-items-row img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.cart-items-row p {
+  margin: 0;
+  color: #444;
+}
+
+.cart-items-row .cross {
+  color: #ff4d4f;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1.3rem;
+  transition: 0.25s;
+}
+
+.cart-items-row .cross:hover {
+  transform: scale(1.2);
+  color: #e63946;
+}
+
+/* --- Tổng cộng & Mã giảm giá --- */
+.cart-bottom {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-top: 2.5rem;
+  gap: 2rem;
+}
+
+.cart-total,
+.cart-promocode {
+  flex: 1;
+  min-width: 300px;
+}
+
+/* Tổng tiền */
+.cart-total h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.cart-total button {
+  background: #ff4d4f;
+  border: none;
+  color: #fff;
+  font-weight: 600;
+  padding: 0.9rem 1.6rem;
+  border-radius: 10px;
+  margin-top: 1rem;
+  cursor: pointer;
+  transition: 0.3s;
+  width: 100%;
+}
+
+.cart-total button:hover {
+  background: #e63946;
+  transform: translateY(-2px);
+}
+
+/* Mã giảm giá */
+.cart-promocode h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.cart-promocode-input {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.8rem;
+}
+
+.cart-promocode-input input {
+  flex: 1;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 0.7rem;
+  font-size: 0.95rem;
+  outline: none;
+  transition: 0.2s;
+}
+
+.cart-promocode-input input:focus {
+  border-color: #ff4d4f;
+}
+
+.cart-promocode-input button {
+  background: #000;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 0 1.25rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: 0.3s;
+}
+
+.cart-promocode-input button:hover {
+  background: #333;
+}

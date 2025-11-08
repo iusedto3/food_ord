@@ -1,0 +1,253 @@
+/* --- Cấu trúc tổng thể: chia 2 cột --- */
+.promotion-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 40px;
+  max-width: 1100px;
+  margin: 40px auto;
+  padding: 0 30px;
+  font-family: 'Poppins', 'Inter', sans-serif;
+  color: #111;
+}
+
+/* --- Cột trái: Form quản lý --- */
+.promotion-left {
+  flex: 1;
+  max-width: 45%;
+  text-align: left;
+}
+
+.promotion-title {
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 25px;
+  color: #111;
+  letter-spacing: 0.5px;
+}
+
+.promotion-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #111;
+  margin-bottom: 6px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 10px;
+  font-size: 14px;
+  border: 1px solid #999;
+  border-radius: 2px;
+  outline: none;
+  background-color: #fff;
+  color: #111;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: #000;
+}
+
+.form-row {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.btn-primary {
+  background-color: #000;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: 2px;
+  padding: 10px 28px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  letter-spacing: 0.5px;
+}
+
+.btn-primary:hover {
+  background-color: #333;
+}
+
+.btn-secondary {
+  background-color: #f5f5f5;
+  color: #111;
+  border: 1px solid #ccc;
+  border-radius: 2px;
+  padding: 10px 26px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* --- Cột phải: Danh sách khuyến mãi --- */
+.promotion-right {
+  flex: 1;
+  max-width: 50%;
+}
+
+.promo-list {
+  margin-top: 40px;
+  display: grid;
+  gap: 18px;
+}
+
+.promo-list h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.promo-card {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 16px 20px;
+  background: #fff;
+  transition: box-shadow 0.2s ease;
+}
+
+.promo-card:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.promo-card.inactive {
+  opacity: 0.7;
+}
+
+.promo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.promo-header h4 {
+  font-size: 16px;
+  margin: 0;
+  font-weight: 500;
+}
+
+.badge-active {
+  color: #007bff;
+  font-weight: 600;
+}
+
+.badge-inactive {
+  color: #999;
+  font-weight: 500;
+}
+
+.promo-details {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.promo-details p {
+  margin: 4px 0;
+}
+
+.promo-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.promo-actions button {
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid #000;
+  border-radius: 2px;
+  padding: 6px 14px;
+  background-color: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.promo-actions button:hover {
+  background-color: #000;
+  color: #fff;
+}
+
+.loading,
+.empty {
+  color: #666;
+  font-size: 14px;
+  font-style: italic;
+  margin-top: 8px;
+  text-align: center;
+}
+/* --- Bố cục 2 cột --- */
+.promotion-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 60px; /* 👉 khoảng cách giữa form và danh sách */
+  max-width: 1200px;
+  margin: 40px auto;
+  padding: 0 40px;
+  font-family: 'Poppins', 'Inter', sans-serif;
+  color: #111;
+}
+
+/* --- Cột trái (Form) --- */
+.promotion-left {
+  flex: 1;
+  min-width: 350px;
+}
+
+/* --- Cột phải (Danh sách khuyến mãi) --- */
+.promotion-right {
+  flex: 1;
+  min-width: 400px;
+}
+
+/* --- Tiêu đề chính --- */
+.promotion-title {
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 25px;
+  color: #111;
+  letter-spacing: 0.5px;
+}
+
+/* --- Danh sách khuyến mãi --- */
+.promo-list {
+  margin-top: 20px;
+  display: grid;
+  gap: 18px;
+}
+
+/* Thẻ card hiển thị khuyến mãi */
+.promo-card {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 16px 20px;
+  background: #fff;
+  transition: box-shadow 0.2s;
+}
+
+.promo-card:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}

@@ -1,22 +1,28 @@
 import express from "express";
-import { addFood, listFood, removeFood} from "../controllers/foodController.js";
+import {
+  addFood,
+  listFood,
+  removeFood,
+  listCategories,
+  getFoodByCategory
+} from "../controllers/foodController.js";
 import multer from "multer";
 
 const foodRouter = express.Router();
 
-//image storage engine
-
 const storage = multer.diskStorage({
-    destination:"uploads",
-    filename:(req,file,cb)=>{
-        return cb(null,`${Date.now()}${file.originalname}`)
-    }
-})
+  destination: "uploads",
+  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
+});
+const upload = multer({ storage });
 
-const upload = multer({storage:storage}); 
-
-foodRouter.post("/add",upload.single("image"),addFood);
+// Các route hiện có
+foodRouter.post("/add", upload.single("image"), addFood);
 foodRouter.get("/list", listFood);
 foodRouter.post("/remove", removeFood);
+foodRouter.get("/categories", listCategories);
 
-export default foodRouter;  
+// Route mới: lấy danh sách món theo danh mục
+foodRouter.get("/category/:name", getFoodByCategory);
+
+export default foodRouter;

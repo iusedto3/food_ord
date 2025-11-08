@@ -1,40 +1,47 @@
-import React, {useContext} from 'react'
-import './FoodItem.css'
-import { assets } from '../../assets/assets'
-import { StoreContext } from '../../contexts/StoreContext'
+import React, { useContext } from "react";
+import "./FoodItem.css";
+import { StoreContext } from "../../contexts/StoreContext";
 
-const FoodItem = ({id,name,price,description,image}) => {
+const FoodItem = ({ id, name, price, description, image, isNew }) => {
+  const { addToCart, url } = useContext(StoreContext);
 
+  return (
+    <div className="food-item">
+      <div className="food-item-img-container">
+        <img
+          className="food-item-img"
+          src={url + "/images/" + image}
+          alt={name}
+        />
+        {isNew && <span className="food-item-badge">New</span>}
+      </div>
 
-    const {cartItems, addToCart, removeFromCart,url} = useContext(StoreContext)
+      <div className="food-item-info">
+        <h3 className="food-item-name">{name}</h3>
+        <p className="food-item-desc">{description}</p>
 
-return (
-    <div className='food-item'>
-        <div className="food-item-img-container">
-            <img className='food-item-img' src={url+"/images/"+image} alt="" />
-            {!cartItems[id] 
-                ?<img className='add' onClick={()=>addToCart(id)} src={assets.add_icon_white} alt=''/>
-                :<div className='food-item-counter'>
-                    <img onClick={()=>removeFromCart(id)} src={assets.remove_icon_red} alt=""/>
-                    <p>{cartItems[id]}</p>
-                    <img onClick={()=>addToCart(id)} src={assets.add_icon_green} alt=""/>
-                </div>
-            }
-            
-        
-                
+        <div className="food-item-bottom">
+          <div className="food-item-price-section">
+            <span className="food-item-price-label">Chỉ từ</span>
+            <span className="food-item-price">
+              {new Intl.NumberFormat("vi-VN", {
+                maximumFractionDigits: 0,
+              }).format(price)}{" "}
+              đ
+            </span>
+          </div>
+
+          <button
+            className="food-item-add-btn"
+            onClick={() => addToCart(id)}
+            aria-label="Thêm vào giỏ"
+          >
+            +
+          </button>
         </div>
-        <div className="food-item-info">
-            <div className="food-item-name-rating">
-                <p>{name}</p>
-                <img src={assets.rating_starts} alt="" />
-            </div>
-            <p className="food-item-desc">{description}</p>
-            <p className="food-item-price">{price} VND</p>
-        </div>
+      </div>
     </div>
-    
-)
-}
+  );
+};
 
-export default FoodItem
+export default FoodItem;

@@ -1,106 +1,59 @@
-import React, { useContext, useState, useRef, useEffect } from 'react'
-import './FoodDisplay.css'
-import { StoreContext } from '../../contexts/StoreContext'
-import FoodItem from '../FoodItem/FoodItem'
+import React, { useContext, useState } from "react";
+import "./FoodDisplay.css";
+import { StoreContext } from "../../contexts/StoreContext";
+import FoodSection from "../FoodSection/FoodSection";
+import FoodPopup from "../FoodPopup/FoodPopup";
 
-const FoodDisplay = ({category}) => {
-    const {food_list} = useContext(StoreContext)
-    const [showPopup, setShowPopup] = useState(false)
-    const [selectedFood, setSelectedFood] = useState(null)
-    const [quantity, setQuantity] = useState(1)
-    const popupRef = useRef(null)
-    const url = useContext(StoreContext).url
+const FoodDisplay = ({ category }) => {
+  const { food_list } = useContext(StoreContext);
+  const [showPopup, setShowPopup] = useState(false);
+  const [selectedFood, setSelectedFood] = useState(null);
 
-    // Focus popup when open
-    useEffect(() => {
-        if (showPopup && popupRef.current) {
-            popupRef.current.focus()
-        }
-    }, [showPopup])
+  // Nếu dữ liệu chưa sẵn sàng
+  if (!Array.isArray(food_list) || food_list.length === 0) {
+    return <p className="loading-text">Đang tải thực đơn...</p>;
+  }
 
-    const handleFoodClick = (food) => {
-        setSelectedFood(food)
-        setQuantity(1)
-        setShowPopup(true)
-    }
+  // Lấy danh sách danh mục duy nhất
+  const categories = [...new Set(food_list.map((f) => f.category))];
 
-    const handleClosePopup = () => {
-        setShowPopup(false)
-        setSelectedFood(null)
-    }
+  // Nếu đang chọn danh mục cụ thể thì chỉ hiển thị danh mục đó
+  const filteredCategories =
+    category === "All" ? categories : categories.filter((c) => c === category);
 
-    const handleAddToCart = (e) => {
-        e.stopPropagation()
-        // TODO: Add to cart logic here
-        alert(`Đã thêm ${quantity} và ${selectedFood.name} vào giỏ hàng!`)
-        handleClosePopup()
-    }
+  // Khi click vào món ăn
+  const handleFoodClick = (food) => {
+    setSelectedFood(food);
+    setShowPopup(true);
+  };
 
-    const handleDecrease = (e) => {
-        e.stopPropagation()
-        setQuantity(q => Math.max(1, q - 1))
-    }
-    const handleIncrease = (e) => {
-        e.stopPropagation()
-        setQuantity(q => q + 1)
-    }
+  // Khi đóng popup
+  const handleClosePopup = () => {
+    setShowPopup(false);
+    setSelectedFood(null);
+  };
 
-    return (
-        <div className='food-display' id='food-display'>
-            <h2>Thực Đơn</h2>
-            <div className="food-display-list">
-                {food_list.map((item,index) => {
-                    if(category==="All" || category===item.category){
-                        return (
-                            <div key={index}  style={{cursor: 'pointer'}}>
-                                <FoodItem id={item._id} name={item.name} description={item.description} price={item.price} image={item.image}/>
-                            </div>
-                        )
-                    }
-                    return null
-                })}
-            </div>
+  return (
+    <div className="food-display">
+      <h2 className="food-display-title">Thực Đơn</h2>
 
-            {showPopup && selectedFood && (
-                <div className="food-popup-overlay" onClick={handleClosePopup}>
-                    <div
-                        className="food-popup-content food-popup-content--split"
-                        onClick={e => e.stopPropagation()}
-                        tabIndex={-1}
-                        ref={popupRef}
-                        role="dialog"
-                        aria-modal="true"
-                        aria-labelledby="food-popup-title"
-                    >
-                        <button className="food-popup-close" onClick={handleClosePopup} aria-label="Đóng">&times;</button>
-                        <div className="food-popup-img-wrap">
-                            <img className="food-popup-img" src={selectedFood.image} alt={selectedFood.name} />
-                        </div>
-                        <div className="food-popup-info">
-                            <div className="food-popup-row">
-                                <div>
-                                    <div className="food-popup-title" id="food-popup-title">{selectedFood.name}</div>
-                                    <div className="food-popup-price food-popup-price--big">
-                                        {selectedFood.price.toLocaleString()} <span className="food-popup-currency">VND</span>
-                                    </div>
-                                </div>
-                                <div className="food-popup-quantity">
-                                    <button onClick={handleDecrease} className="food-popup-qty-btn" aria-label="Giảm">-</button>
-                                    <span className="food-popup-qty-value">{quantity}</span>
-                                    <button onClick={handleIncrease} className="food-popup-qty-btn" aria-label="Tăng">+</button>
-                                </div>
-                            </div>
-                            <div className="food-popup-desc">{selectedFood.description}</div>
-                            <button className="food-popup-order-btn" onClick={handleAddToCart}>
-                                <span className="food-popup-order-btn-icon">+</span> ĐẶT MÓN
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </div>
-    )
-}
+      {filteredCategories.map((cat) => {
+        const items = food_list.filter((item) => item.category === cat);
+        return (
+          <FoodSection
+            key={cat}
+            category={cat}
+            items={items}
+            onFoodClick={handleFoodClick}
+          />
+        );
+      })}
 
-export default FoodDisplay
-// onClick={() => handleFoodClick(item)}
+      {showPopup && selectedFood && (
+        <FoodPopup food={selectedFood} onClose={handleClosePopup} />
+      )}
+    </div>
+  );
+};
+
+export default FoodDisplay;
