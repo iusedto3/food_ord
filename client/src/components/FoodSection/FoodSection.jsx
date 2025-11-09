@@ -4,10 +4,8 @@ import FoodItem from "../FoodItem/FoodItem";
 import defaultBanner from "/Pizza.png";
 
 const FoodSection = ({ category, items, onFoodClick }) => {
-  // 🧩 Đảm bảo items là mảng, tránh lỗi .map
   if (!Array.isArray(items) || items.length === 0) return null;
 
-  // Banner tạm: có thể đổi theo tên danh mục
   const bannerMap = {
     Pizza: "/Pizza.png",
     Chickens: "/src/assets/banner-chicken.jpg",
@@ -18,15 +16,11 @@ const FoodSection = ({ category, items, onFoodClick }) => {
   const banner = bannerMap[category] || defaultBanner;
 
   return (
-    <section className="food-section">
+    <section id={category} className="food-section">
       <h3 className="food-section-title">{category}</h3>
-
-      {/* Banner */}
       <div className="food-section-banner">
         <img src={banner} alt={category} />
       </div>
-
-      {/* Grid món ăn */}
       <div className="food-section-grid">
         {items.map((food) => (
           <div

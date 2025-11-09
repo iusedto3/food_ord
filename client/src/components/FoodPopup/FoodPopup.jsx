@@ -2,48 +2,85 @@ import React, { useContext, useEffect, useRef, useState } from "react";
 import "./FoodPopup.css";
 import { StoreContext } from "../../contexts/StoreContext";
 
-const FoodPopup = ({ food, onClose }) => {
-  const { addToCart, url } = useContext(StoreContext);
+const FoodPopup = ({
+  food,
+  onClose,
+  isOpen,
+  mode = "add",
+  itemIndex = null,
+}) => {
+  const { addToCart, setCartItems, cartItems, url } = useContext(StoreContext);
   const popupRef = useRef(null);
 
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState(food?.quantity || 1);
   const [selectedSize, setSelectedSize] = useState(
-    food?.sizes?.[0] || "Mặc định"
+    food?.size || food?.sizes?.[0] || "Mặc định"
   );
-  const [selectedOptions, setSelectedOptions] = useState([]);
-  const [note, setNote] = useState("");
+  const [selectedOptions, setSelectedOptions] = useState(
+    food?.toppings?.map((t) => t.label) || []
+  );
+  const [note, setNote] = useState(food?.note || "");
 
   // Focus popup
   useEffect(() => {
-    popupRef.current?.focus();
-  }, []);
+    if (isOpen) popupRef.current?.focus();
+  }, [isOpen]);
 
-  // ESC to close
+  // ESC để đóng popup
   useEffect(() => {
     const handleKey = (e) => e.key === "Escape" && onClose();
     document.addEventListener("keydown", handleKey);
     return () => document.removeEventListener("keydown", handleKey);
   }, [onClose]);
 
-  const handleAddToCart = () => {
-    const itemData = {
-      id: food._id,
+  if (!food) return null;
+
+  // ✅ Xử lý thêm hoặc cập nhật giỏ hàng
+  const handleConfirm = () => {
+    const toppingsData = food.options
+      ?.filter((opt) => selectedOptions.includes(opt.label))
+      .map((opt) => ({ label: opt.label, price: opt.price }));
+
+    const payload = {
+      itemId: food._id,
       size: selectedSize,
-      options: selectedOptions,
+      toppings: toppingsData,
       note,
       quantity,
     };
-    console.log(" Thêm vào giỏ:", itemData);
-    for (let i = 0; i < quantity; i++) addToCart(food._id);
+
+    if (mode === "edit" && itemIndex !== null) {
+      // 🔄 Cập nhật item trong giỏ hàng tại chỗ
+      const updatedCart = [...cartItems];
+      const base = Number(food.price) || 0;
+      const extras = toppingsData.reduce((a, b) => a + (b.price || 0), 0);
+      const totalPrice = (base + extras) * quantity;
+
+      updatedCart[itemIndex] = {
+        ...updatedCart[itemIndex],
+        size: selectedSize,
+        toppings: toppingsData,
+        note,
+        quantity,
+        totalPrice,
+      };
+
+      setCartItems(updatedCart);
+      console.log("✅ Đã cập nhật món trong giỏ:", updatedCart[itemIndex]);
+    } else {
+      // ➕ Thêm mới vào giỏ
+      addToCart(payload);
+    }
+
     onClose();
   };
 
   const totalPrice = (() => {
     const base = Number(food.price) || 0;
-    const extras = selectedOptions
-      .map((i) => food.options?.[i]?.price || 0)
-      .reduce((a, b) => a + b, 0);
-    return (base + extras) * quantity;
+    const extras = food.options
+      ?.filter((opt) => selectedOptions.includes(opt.label))
+      .reduce((sum, opt) => sum + opt.price, 0);
+    return (base + (extras || 0)) * quantity;
   })();
 
   return (
@@ -97,17 +134,17 @@ const FoodPopup = ({ food, onClose }) => {
                   <label
                     key={i}
                     className={`food-popup-option ${
-                      selectedOptions.includes(i) ? "selected" : ""
+                      selectedOptions.includes(opt.label) ? "selected" : ""
                     }`}
                   >
                     <input
                       type="checkbox"
-                      checked={selectedOptions.includes(i)}
+                      checked={selectedOptions.includes(opt.label)}
                       onChange={(e) =>
                         setSelectedOptions((prev) =>
                           e.target.checked
-                            ? [...prev, i]
-                            : prev.filter((id) => id !== i)
+                            ? [...prev, opt.label]
+                            : prev.filter((o) => o !== opt.label)
                         )
                       }
                     />
@@ -154,8 +191,9 @@ const FoodPopup = ({ food, onClose }) => {
               </div>
             </div>
 
-            <button className="food-popup-order-btn" onClick={handleAddToCart}>
-              Thêm vào giỏ hàng • {totalPrice.toLocaleString()} đ
+            <button className="food-popup-order-btn" onClick={handleConfirm}>
+              {mode === "edit" ? "Cập nhật" : "Thêm vào giỏ hàng"} •{" "}
+              {totalPrice.toLocaleString("vi-VN")} đ
             </button>
           </div>
         </div>

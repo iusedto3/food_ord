@@ -29,3 +29,8 @@ a{
     }
     
 }
+body {
+    margin: 0;
+    padding-top: 100px;
+    /* khoảng trống bằng chiều cao navbar */
+}

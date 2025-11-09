@@ -1,42 +1,22 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import "./ExploreMenu.css";
 import axios from "axios";
+import { StoreContext } from "../../contexts/StoreContext";
 
-const ExploreMenu = ({ category, setCategory, setFoodList }) => {
+const ExploreMenu = ({ category, setCategory }) => {
   const [menuList, setMenuList] = useState([]);
+  const { url } = useContext(StoreContext);
+  const API_URL = `${url}/api/food`;
 
-  const API_URL = "http://localhost:4000/api/food";
-
-  // Lấy danh sách danh mục từ backend
+  // 🔹 Lấy danh sách danh mục (categories)
   const fetchCategories = async () => {
     try {
       const res = await axios.get(`${API_URL}/categories`);
       if (res.data.success && Array.isArray(res.data.data)) {
-        setMenuList(res.data.data);
+        setMenuList(["All", ...res.data.data]); // thêm "All" ở đầu
       }
     } catch (err) {
-      console.error("Lỗi khi tải danh mục:", err);
-    }
-  };
-
-  // Lấy món ăn theo danh mục
-  const fetchFoodsByCategory = async (selectedCategory) => {
-    try {
-      if (selectedCategory === "All") {
-        const res = await axios.get(`${API_URL}/list`);
-        if (res.data.success && Array.isArray(res.data.data)) {
-          setFoodList(res.data.data);
-        }
-      } else {
-        const res = await axios.get(`${API_URL}/category/${selectedCategory}`);
-        if (res.data.success && Array.isArray(res.data.data)) {
-          setFoodList(res.data.data);
-        } else {
-          setFoodList([]); // Không có món nào
-        }
-      }
-    } catch (err) {
-      console.error("Lỗi khi tải món ăn:", err);
+      console.error(" Lỗi khi tải danh mục:", err);
     }
   };
 
@@ -44,34 +24,42 @@ const ExploreMenu = ({ category, setCategory, setFoodList }) => {
     fetchCategories();
   }, []);
 
-  // Khi đổi danh mục, tự động gọi API lấy món
-  useEffect(() => {
-    fetchFoodsByCategory(category);
-  }, [category]);
+  // 🔹 Khi click danh mục: chỉ đổi state và scroll đến section tương ứng
+  const handleClick = (cat) => {
+    setCategory(cat);
+
+    // Nếu chọn All thì cuộn lên đầu trang
+    if (cat === "All") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    // Cuộn tới section tương ứng
+    setTimeout(() => {
+      const section = document.getElementById(cat);
+      if (section) {
+        const yOffset = -80;
+        const y =
+          section.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: y, behavior: "smooth" });
+      }
+    }, 300);
+  };
 
   return (
     <div className="explore-menu" id="explore-menu">
-      <h1>THỰC ĐƠN</h1>
-      <p className="explore-menu-text">
-        "Cảnh báo: ghé thăm website này có thể khiến bạn đói không kiểm soát!"
-        <br />
-        "Ăn xong nhớ quay lại – khẩu phần tình yêu còn rất nhiều!"
-      </p>
-
       <div className="explore-menu-list">
         {menuList.map((cat, index) => (
-          <div
-            key={index}
-            onClick={() => setCategory((prev) => (prev === cat ? "All" : cat))}
-            className="explore-menu-list-item"
-          >
-            <div className={`menu-item ${category === cat ? "active" : ""}`}>
+          <div key={index} className="explore-menu-list-item">
+            <div
+              className={`menu-item ${category === cat ? "active" : ""}`}
+              onClick={() => handleClick(cat)}
+            >
               <p>{cat}</p>
             </div>
           </div>
         ))}
       </div>
-
       <hr />
     </div>
   );

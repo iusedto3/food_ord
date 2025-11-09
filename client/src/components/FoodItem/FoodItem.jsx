@@ -7,8 +7,9 @@ const FoodItem = ({ id, name, price, description, image, onClick }) => {
   const [loaded, setLoaded] = useState(false);
 
   return (
-    <div className="food-item" onClick={onClick}>
-      <div className="food-item-img-container">
+    <div className="food-item horizontal" onClick={onClick}>
+      {/* Ảnh */}
+      <div className="food-item-img-container round-img">
         {!loaded && <div className="skeleton skeleton-img" />}
         <img
           className={`food-item-img ${loaded ? "visible" : "hidden"}`}
@@ -18,6 +19,7 @@ const FoodItem = ({ id, name, price, description, image, onClick }) => {
         />
       </div>
 
+      {/* Nội dung */}
       <div className="food-item-info">
         <h3 className="food-item-name">{name}</h3>
         <p className="food-item-desc">{description}</p>

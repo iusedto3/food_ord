@@ -153,3 +153,13 @@
     display: none; /* Ẩn mũi tên trên mobile, chỉ dùng vuốt */
   }
 }
+
+.suggestion-item {
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.suggestion-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}

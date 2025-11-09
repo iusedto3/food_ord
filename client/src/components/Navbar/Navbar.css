@@ -1,145 +1,120 @@
-.navbar{
-    padding: 20px 0px;
+.navbar {
+    width: 100%;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding: 12px 40px;
+    background-color: #ffffff;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    
+    /* bỏ bóng để hòa màu */
+   
+    /* thêm nhẹ để tách khi cần */
 }
 
-.navbar .logo{
-    width: 150px;
+.navbar .logo {
+    width: 140px;
+    object-fit: contain;
 }
 
-.navbar-menu{
+/* MENU TRUNG TÂM */
+.navbar-menu {
     display: flex;
-    gap: 20px;
+    gap: 30px;
     list-style: none;
-    color: #495574;
-}
-
-.navbar-right{
-    display: flex;
-    gap: 40px;
     align-items: center;
+    margin: 0;
+    padding: 0;
 }
 
-.navbar button{
-    background: transparent;
+.navbar-menu li {
     font-size: 16px;
+    font-weight: 500;
     color: #495574;
-    border: 1px solid tomato;
-    padding: 10px 30px;
-    border-radius: 50px;
     cursor: pointer;
-    transition: 0.3s;
+    transition: color 0.3s;
 }
 
-.navbar button:hover{
-    background-color: #fff4f2;
-}
-
-.navbar .active{
-    padding-bottom: 2px;
-    border-bottom: 2px solid #49557e;
-}
-
-.navbar li{
-    cursor: pointer;
-}
-
-.navbar-search-icon{
-    position: relative;
-}
-
-.navbar-search-icon .dot{
-    position: absolute;
-    min-width: 10px;
-    min-height: 10px;
-    background-color: tomato;
-    border-radius: 5px;
-    top: -8px;
-    right: -8px;
-}
-
-@media (max-width: 1050px){
-    .navbar .logo{
-        width: 140px;
-    }
-    .navbar-menu{
-        gap: 20px;
-        font-size: 17px;
-    }
-    .navbar-right{
-        gap: 30px;
-    }
-    .navbar-right img{
-        width: 22px;
-    }
-
-    .navbar button{
-        padding: 8px 25px;
-    }
-}
-
-@media (max-width: 900px){
-    .navbar .logo{
-        width: 120px;
-    }
-    .navbar-menu{
-        gap: 15px;
-        font-size: 16px;
-    }
-    .navbar-right{
-        gap: 20px;
-    }
-    .navbar-right img{
-        width: 20px;
-    }
-
-    .navbar button{
-        padding: 7px 20px;
-        font-size: 15px;
-    }
-}
-
-.nav-profile{
-    position: relative;
-}
-
-.nav-profile-dropdown{
-    position: absolute;
-    display: none;
-    right: 1;
-    z-index: 1;
-}
-
-.navbar-profile:hover .nav-profile-dropdown{
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    background-color: #fff2ef;
-    padding: 12px 25px;
-    border-radius: 4px;
-    border: 1px solid tomato;
-    outline: 2px solid white;
-    list-style: none;
-}
-
-.nav-profile-dropdown li{
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    cursor: pointer;
-}
-
-.nav-profile-dropdown img{
-    width: 20px;
-}
-.nav-profile-dropdown li:hover{
+.navbar-menu li:hover {
     color: tomato;
 }
 
-@media (max-width: 750px){
-    .navbar-menu{
-        display: none;
-    }
+/* KHU VỰC BÊN PHẢI */
+.navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.navbar-right img {
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+}
+
+.navbar-search-icon {
+    position: relative;
+}
+
+.navbar-search-icon .dot {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: tomato;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+/* BUTTON */
+.navbar button {
+    background: transparent;
+    border: 1px solid tomato;
+    color: #495574;
+    font-size: 15px;
+    padding: 8px 22px;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.navbar button:hover {
+    background: #fff4f2;
+}
+
+/* DROPDOWN */
+.navbar-profile {
+    position: relative;
+    cursor: pointer;
+}
+
+.nav-profile-dropdown {
+    position: absolute;
+    top: 50px;
+    right: 0;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 10px 0;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+    width: 150px;
+}
+
+.nav-profile:hover .nav-profile-dropdown {
+    display: block;
+}
+
+.nav-profile-dropdown li {
+    list-style: none;
+    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+.nav-profile-dropdown li:hover {
+    background-color: #f5f5f5;
 }

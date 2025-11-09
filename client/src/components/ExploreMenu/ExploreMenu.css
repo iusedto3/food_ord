@@ -1,64 +1,120 @@
-.explore-menu{
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+.explore-menu {
+    position: sticky;
+    top: 52px;
+    /* khớp chiều cao thực tế của navbar */
+    z-index: 900;
+    background-color: #ffffff;
+    padding: 10px 0;
+    margin: 0;
+    transition: box-shadow 0.3s ease;
+    border-top: none;
+    font-family: "Be Vietnam Pro", sans-serif;
+    /* đồng bộ font */
 }
 
-.explore-menu h1{
-    font-size: 2.5vw;
-    font-weight: 500;
+.explore-menu h1 {
+    font-size: 2.2vw;
+    font-weight: 600;
     color: #262626;
+    letter-spacing: 0.3px;
 }
 
-.explore-menu-text{
+.explore-menu-text {
     max-width: 60%;
-    columns: #808080;
+    color: #808080;
+    font-family: inherit;
+    /* kế thừa font Be Vietnam Pro */
+    font-weight: 400;
 }
 
-.explore-menu-list{
+.explore-menu-list {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 30px;
     text-align: center;
-    margin: 20px 0px;
-    overflow-x: scroll;
+    margin: 15px 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    /* ẩn scrollbar cho Firefox */
 }
 
-.explore-menu-list::-webkit-scrollbar{
+.explore-menu-list::-webkit-scrollbar {
     display: none;
+    /* ẩn scrollbar cho Chrome/Safari */
 }
 
-.explore-menu-list-item img{
+.explore-menu-list-item img {
     width: 7.5vw;
     min-width: 80px;
     border-radius: 50px;
     cursor: pointer;
-    transition: 0.2s;
+    transition: transform 0.2s ease, border 0.2s ease;
 }
 
-.explore-menu-list-item p{
+.explore-menu-list-item p {
     margin-top: 10px;
-    color: #747474;
-    font-size: max(1.4vw, 16px);
-    cursor: pointer
+    color: #555555;
+    font-size: clamp(15px, 1.3vw, 18px);
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.2s, border-bottom 0.2s;
+    padding-bottom: 4px;
+    border-bottom: 3px solid transparent;
+    /* ẩn mặc định */
 }
 
-.explore-menu hr{
-    margin: 10px 0px;
+.explore-menu-list-item p:hover {
+    color: tomato;
+}
+
+.explore-menu hr {
+    margin: 10px 0;
     height: 2px;
     background-color: #e2e2e2;
     border: none;
 }
 
-.explore-menu-list-item .active{
-    border: 4px solid tomato;
-    padding: 2px;
-}
 
-@media (max-width: 1050px){
-    .explore-menu-text{
+
+@media (max-width: 1050px) {
+    .explore-menu-text {
         max-width: 100%;
         font-size: 14px;
     }
+}
+
+.explore-menu.is-sticky {
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
+}
+
+/* --- Khi được chọn (active) --- */
+.explore-menu-list-item p.active {
+    color: tomato;
+    border-bottom: 3px solid tomato;
+}
+
+.menu-item {
+    position: relative;
+    padding-bottom: 4px;
+    cursor: pointer;
+    font-family: "Be Vietnam Pro", sans-serif;
+    color: #555;
+    transition: color 0.3s ease;
+}
+
+.menu-item.active,
+.menu-item:hover {
+    color: tomato;
+}
+
+.menu-item .underline {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 3px;
+    width: 100%;
+    background-color: tomato;
+    border-radius: 10px;
+    transition: all 0.3s ease;
 }

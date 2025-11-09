@@ -21,20 +21,27 @@
     border-radius: 14px;
     overflow: hidden;
     margin-bottom: 30px;
+    background-color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .food-section-banner img {
     width: 100%;
-    height: 260px;
-    object-fit: cover;
+    height: auto;
+    /* Giữ nguyên tỉ lệ ảnh */
+    object-fit: contain;
+    /* Không cắt ảnh */
     border-radius: 14px;
+    display: block;
 }
 
 /* Grid cố định 2 cột */
 .food-grid-two {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 24px;
+    gap: 20px;
 }
 
 /* Responsive cho mobile */

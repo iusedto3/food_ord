@@ -1,20 +1,25 @@
 import jwt from 'jsonwebtoken';
 
 const authMiddleware = (req, res, next) => {
-    const {token} = req.headers;
-    if(!token){
-        return res.json({success: false, message: "No token, authorization denied"});
-    }
-    try{
-        const token_decode = jwt.verify(token, process.env.JWT_SECRET);
-        req.body.userId = token_decode.id;
-        next();
-    } catch(error){
-        console.log(error);
-        res.json({success: false, message: "Token is not valid"});
+  const authHeader = req.headers.authorization;
 
-    }
+  if (!authHeader) {
+    return res.json({ success: false, message: "⚠️ Không có token, từ chối truy cập" });
+  }
 
-}
+  const token = authHeader.split(" ")[1]; // Lấy phần sau 'Bearer '
+  if (!token) {
+    return res.json({ success: false, message: "⚠️ Token không hợp lệ" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.body.userId = decoded.id;
+    next();
+  } catch (err) {
+    console.log("❌ Lỗi verify token:", err.message);
+    res.json({ success: false, message: "Token không hợp lệ hoặc hết hạn" });
+  }
+};
 
 export default authMiddleware;
