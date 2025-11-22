@@ -1,0 +1,28 @@
+.summary-row,
+.summary-total {
+    display: flex;
+    justify-content: space-between;
+    margin: 8px 0;
+}
+
+.summary-total {
+    font-weight: bold;
+    font-size: 17px;
+}
+
+.checkout-btn {
+    margin-top: 15px;
+    width: 100%;
+    background: #e60000;
+    padding: 12px 0;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.checkout-btn.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+    cursor: not-allowed;
+}

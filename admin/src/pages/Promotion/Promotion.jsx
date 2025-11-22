@@ -1,137 +1,154 @@
-import { useState, useEffect } from 'react'
-import axios from 'axios'
-import { toast } from 'react-toastify'
-import './Promotion.css'
+import { useState, useEffect } from "react";
+import axios from "axios";
+import { toast } from "react-toastify";
+import "./Promotion.css";
 
 const Promotion = ({ url }) => {
-  const apiUrl = `${url}/api/promotion`
+  const apiUrl = `${url}/api/promotion`;
 
   const initialFormState = {
-    type: 'percentage',
-    value: '',
-    code: '',
-    description: '',
-    minOrderAmount: '',
-    startDate: '',
-    endDate: ''
-  }
+    type: "percentage",
+    value: "",
+    code: "",
+    description: "",
+    minOrderAmount: "",
+    startDate: "",
+    endDate: "",
+  };
 
-  const [promos, setPromos] = useState([])
-  const [form, setForm] = useState(initialFormState)
-  const [editingId, setEditingId] = useState(null)
-  const [loading, setLoading] = useState(false)
+  const [promos, setPromos] = useState([]);
+  const [form, setForm] = useState(initialFormState);
+  const [editingId, setEditingId] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   // 📥 Lấy danh sách khuyến mãi từ server
   const fetchPromos = async () => {
     try {
-      setLoading(true)
-      const res = await axios.get(apiUrl)
+      setLoading(true);
+      const res = await axios.get(apiUrl);
       const data = Array.isArray(res.data)
         ? res.data
-        : res.data.promotions || res.data.data || []
-      setPromos(data)
+        : res.data.promotions || res.data.data || [];
+      setPromos(data);
     } catch (err) {
-      console.error('Error fetching promos:', err)
-      toast.error('Không thể tải danh sách khuyến mãi!')
-      setPromos([])
+      console.error("Error fetching promos:", err);
+      toast.error("Không thể tải danh sách khuyến mãi!");
+      setPromos([]);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchPromos()
-  }, [])
+    fetchPromos();
+  }, []);
 
   // 🔄 Reset form
   const resetForm = () => {
-    setForm(initialFormState)
-    setEditingId(null)
-  }
+    setForm(initialFormState);
+    setEditingId(null);
+  };
 
   // 💾 Thêm hoặc cập nhật khuyến mãi
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    if (form.type === 'coupon' && !form.code.trim())
-      return toast.error('Vui lòng nhập mã khuyến mãi!')
+    e.preventDefault();
+
+    if (form.type === "coupon" && !form.code.trim()) {
+      return toast.error("Vui lòng nhập mã khuyến mãi!");
+    }
+
+    if (!form.startDate || !form.endDate)
+      return toast.error("Ngày bắt đầu và kết thúc không được để trống!");
+
     if (new Date(form.startDate) > new Date(form.endDate))
-      return toast.error('Ngày bắt đầu phải trước ngày kết thúc!')
+      return toast.error("Ngày bắt đầu phải trước ngày kết thúc!");
+
+    // 🔥 FIX LỖI 400: ép kiểu đúng format backend yêu cầu
+    const payload = {
+      ...form,
+      value: Number(form.value),
+      minOrderAmount: Number(form.minOrderAmount || 0),
+      startDate: new Date(form.startDate),
+      endDate: new Date(form.endDate),
+    };
 
     try {
-      setLoading(true)
+      setLoading(true);
+
       if (editingId) {
-        await axios.put(`${apiUrl}/${editingId}`, form)
-        toast.success('Đã cập nhật khuyến mãi!')
+        await axios.put(`${apiUrl}/${editingId}`, payload);
+        toast.success("Đã cập nhật khuyến mãi!");
       } else {
-        await axios.post(apiUrl, form)
-        toast.success('Đã thêm khuyến mãi mới!')
+        await axios.post(apiUrl, payload);
+        toast.success("Đã thêm khuyến mãi mới!");
       }
-      resetForm()
-      fetchPromos()
+
+      resetForm();
+      fetchPromos();
     } catch (err) {
-      console.error('Error saving promo:', err)
-      toast.error(err.response?.data?.message || 'Lỗi khi lưu khuyến mãi!')
+      console.error("Error saving promo:", err);
+      toast.error(err.response?.data?.message || "Lỗi khi lưu khuyến mãi!");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // ✏️ Sửa khuyến mãi
   const handleEdit = (promo) => {
     setForm({
       type: promo.type,
       value: promo.value,
-      code: promo.code || '',
-      description: promo.description || '',
-      minOrderAmount: promo.minOrderAmount || '',
-      startDate: promo.startDate?.split('T')[0] || '',
-      endDate: promo.endDate?.split('T')[0] || ''
-    })
-    setEditingId(promo._id)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
+      code: promo.code || "",
+      description: promo.description || "",
+      minOrderAmount: promo.minOrderAmount || "",
+      startDate: promo.startDate?.split("T")[0] || "",
+      endDate: promo.endDate?.split("T")[0] || "",
+    });
+    setEditingId(promo._id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   // 🗑️ Xóa khuyến mãi
   const handleDelete = async (id) => {
-    if (!window.confirm('Bạn có chắc muốn xóa khuyến mãi này?')) return
+    if (!window.confirm("Bạn có chắc muốn xóa khuyến mãi này?")) return;
     try {
-      setLoading(true)
-      await axios.delete(`${apiUrl}/${id}`)
-      toast.success('Đã xóa khuyến mãi!')
-      fetchPromos()
+      setLoading(true);
+      await axios.delete(`${apiUrl}/${id}`);
+      toast.success("Đã xóa khuyến mãi!");
+      fetchPromos();
     } catch {
-      toast.error('Không thể xóa khuyến mãi!')
+      toast.error("Không thể xóa khuyến mãi!");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // 🔛 Bật/tắt khuyến mãi
   const toggleActive = async (id, current) => {
     try {
-      setLoading(true)
-      await axios.put(`${apiUrl}/${id}`, { isActive: !current })
-      toast.info(`Đã ${!current ? 'bật' : 'tắt'} khuyến mãi`)
-      fetchPromos()
+      setLoading(true);
+      await axios.put(`${apiUrl}/${id}`, { isActive: !current });
+      toast.info(`Đã ${!current ? "bật" : "tắt"} khuyến mãi`);
+      fetchPromos();
     } catch {
-      toast.error('Lỗi khi thay đổi trạng thái!')
+      toast.error("Lỗi khi thay đổi trạng thái!");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // 💬 Format dữ liệu hiển thị
   const formatValue = (promo) =>
-    promo.type === 'percentage'
+    promo.type === "percentage"
       ? `${promo.value}%`
-      : `${Number(promo.value).toLocaleString('vi-VN')}₫`
+      : `${Number(promo.value).toLocaleString("vi-VN")}₫`;
 
   const getTypeLabel = (type) =>
     ({
-      percentage: 'Giảm phần trăm',
-      fixed: 'Giảm cố định',
-      coupon: 'Mã giảm giá'
-    }[type] || type)
+      percentage: "Giảm phần trăm",
+      fixed: "Giảm cố định",
+      coupon: "Mã giảm giá",
+    }[type] || type);
 
   // 🧱 Giao diện chia 2 cột
   return (
@@ -155,19 +172,19 @@ const Promotion = ({ url }) => {
           </div>
 
           <div className="form-group">
-            <label>Giá trị {form.type === 'percentage' ? '(%)' : '(₫)'}</label>
+            <label>Giá trị {form.type === "percentage" ? "(%)" : "(₫)"}</label>
             <input
               type="number"
               value={form.value}
               onChange={(e) => setForm({ ...form, value: e.target.value })}
-              placeholder={form.type === 'percentage' ? 'VD: 10' : 'VD: 50000'}
+              placeholder={form.type === "percentage" ? "VD: 10" : "VD: 50000"}
               required
               min="0"
               disabled={loading}
             />
           </div>
 
-          {form.type === 'coupon' && (
+          {form.type === "coupon" && (
             <div className="form-group">
               <label>Mã khuyến mãi</label>
               <input
@@ -203,7 +220,9 @@ const Promotion = ({ url }) => {
               <input
                 type="date"
                 value={form.startDate}
-                onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, startDate: e.target.value })
+                }
                 required
                 disabled={loading}
               />
@@ -235,11 +254,7 @@ const Promotion = ({ url }) => {
 
           <div className="form-actions">
             <button type="submit" className="btn-primary" disabled={loading}>
-              {loading
-                ? 'Đang xử lý...'
-                : editingId
-                ? 'Cập nhật'
-                : 'Thêm mới'}
+              {loading ? "Đang xử lý..." : editingId ? "Cập nhật" : "Thêm mới"}
             </button>
             {editingId && (
               <button
@@ -267,14 +282,14 @@ const Promotion = ({ url }) => {
             promos.map((p) => (
               <div
                 key={p._id}
-                className={`promo-card ${p.isActive ? '' : 'inactive'}`}
+                className={`promo-card ${p.isActive ? "" : "inactive"}`}
               >
                 <div className="promo-header">
-                  <h4>{p.description || 'Không có mô tả'}</h4>
+                  <h4>{p.description || "Không có mô tả"}</h4>
                   <span
-                    className={p.isActive ? 'badge-active' : 'badge-inactive'}
+                    className={p.isActive ? "badge-active" : "badge-inactive"}
                   >
-                    {p.isActive ? 'Hoạt động' : 'Tạm dừng'}
+                    {p.isActive ? "Hoạt động" : "Tạm dừng"}
                   </span>
                 </div>
                 <div className="promo-details">
@@ -291,14 +306,14 @@ const Promotion = ({ url }) => {
                   )}
                   {p.minOrderAmount > 0 && (
                     <p>
-                      <strong>Đơn tối thiểu:</strong>{' '}
-                      {Number(p.minOrderAmount).toLocaleString('vi-VN')}₫
+                      <strong>Đơn tối thiểu:</strong>{" "}
+                      {Number(p.minOrderAmount).toLocaleString("vi-VN")}₫
                     </p>
                   )}
                   <p>
-                    <strong>Thời gian:</strong>{' '}
-                    {new Date(p.startDate).toLocaleDateString('vi-VN')} -{' '}
-                    {new Date(p.endDate).toLocaleDateString('vi-VN')}
+                    <strong>Thời gian:</strong>{" "}
+                    {new Date(p.startDate).toLocaleDateString("vi-VN")} -{" "}
+                    {new Date(p.endDate).toLocaleDateString("vi-VN")}
                   </p>
                 </div>
                 <div className="promo-actions">
@@ -310,11 +325,11 @@ const Promotion = ({ url }) => {
                     Sửa
                   </button>
                   <button
-                    className={p.isActive ? 'btn-warning' : 'btn-success'}
+                    className={p.isActive ? "btn-warning" : "btn-success"}
                     onClick={() => toggleActive(p._id, p.isActive)}
                     disabled={loading}
                   >
-                    {p.isActive ? 'Tắt' : 'Bật'}
+                    {p.isActive ? "Tắt" : "Bật"}
                   </button>
                   <button
                     className="btn-danger"
@@ -329,7 +344,7 @@ const Promotion = ({ url }) => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Promotion
+export default Promotion;

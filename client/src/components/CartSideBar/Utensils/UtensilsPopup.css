@@ -1,0 +1,52 @@
+.utensils-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 200;
+}
+
+.utensils-popup {
+    background: white;
+    width: 400px;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.utensils-list {
+    margin-top: 10px;
+}
+
+.utensil-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 6px 0;
+}
+
+.popup-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.confirm-btn {
+    background: #e60000;
+    border: none;
+    padding: 8px 14px;
+    color: white;
+    border-radius: 6px;
+}
+
+.close-btn {
+    border: 1px solid #aaa;
+    padding: 8px 14px;
+    border-radius: 6px;
+    background: white;
+}

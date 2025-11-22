@@ -1,0 +1,24 @@
+.payment-method-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.payment-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px;
+    border-radius: 10px;
+    background: #fafafa;
+    cursor: pointer;
+    border: 1px solid #eee;
+}
+
+.payment-option:hover {
+    background: #f3f3f3;
+}
+
+.payment-option input {
+    transform: scale(1.2);
+}

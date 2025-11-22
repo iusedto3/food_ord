@@ -1,87 +1,29 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React from "react";
 import "./FoodPopup.css";
+import useFoodPopup from "../../hooks/useFoodPopup";
+import { useContext } from "react";
 import { StoreContext } from "../../contexts/StoreContext";
 
-const FoodPopup = ({
-  food,
-  onClose,
-  isOpen,
-  mode = "add",
-  itemIndex = null,
-}) => {
-  const { addToCart, setCartItems, cartItems, url } = useContext(StoreContext);
-  const popupRef = useRef(null);
+const FoodPopup = ({ isOpen, food, mode, itemIndex, onConfirm, onClose }) => {
+  const { backendUrl } = useContext(StoreContext);
 
-  const [quantity, setQuantity] = useState(food?.quantity || 1);
-  const [selectedSize, setSelectedSize] = useState(
-    food?.size || food?.sizes?.[0] || "Mặc định"
-  );
-  const [selectedOptions, setSelectedOptions] = useState(
-    food?.toppings?.map((t) => t.label) || []
-  );
-  const [note, setNote] = useState(food?.note || "");
-
-  // Focus popup
-  useEffect(() => {
-    if (isOpen) popupRef.current?.focus();
-  }, [isOpen]);
-
-  // ESC để đóng popup
-  useEffect(() => {
-    const handleKey = (e) => e.key === "Escape" && onClose();
-    document.addEventListener("keydown", handleKey);
-    return () => document.removeEventListener("keydown", handleKey);
-  }, [onClose]);
+  const {
+    popupRef,
+    quantity,
+    setQuantity,
+    selectedSize,
+    setSelectedSize,
+    selectedCrust,
+    setSelectedCrust,
+    selectedToppings,
+    toggleTopping,
+    note,
+    setNote,
+    handleConfirm,
+    totalPrice,
+  } = useFoodPopup(food, mode, itemIndex, onClose);
 
   if (!food) return null;
-
-  // ✅ Xử lý thêm hoặc cập nhật giỏ hàng
-  const handleConfirm = () => {
-    const toppingsData = food.options
-      ?.filter((opt) => selectedOptions.includes(opt.label))
-      .map((opt) => ({ label: opt.label, price: opt.price }));
-
-    const payload = {
-      itemId: food._id,
-      size: selectedSize,
-      toppings: toppingsData,
-      note,
-      quantity,
-    };
-
-    if (mode === "edit" && itemIndex !== null) {
-      // 🔄 Cập nhật item trong giỏ hàng tại chỗ
-      const updatedCart = [...cartItems];
-      const base = Number(food.price) || 0;
-      const extras = toppingsData.reduce((a, b) => a + (b.price || 0), 0);
-      const totalPrice = (base + extras) * quantity;
-
-      updatedCart[itemIndex] = {
-        ...updatedCart[itemIndex],
-        size: selectedSize,
-        toppings: toppingsData,
-        note,
-        quantity,
-        totalPrice,
-      };
-
-      setCartItems(updatedCart);
-      console.log("✅ Đã cập nhật món trong giỏ:", updatedCart[itemIndex]);
-    } else {
-      // ➕ Thêm mới vào giỏ
-      addToCart(payload);
-    }
-
-    onClose();
-  };
-
-  const totalPrice = (() => {
-    const base = Number(food.price) || 0;
-    const extras = food.options
-      ?.filter((opt) => selectedOptions.includes(opt.label))
-      .reduce((sum, opt) => sum + opt.price, 0);
-    return (base + (extras || 0)) * quantity;
-  })();
 
   return (
     <div className="food-popup-overlay" onClick={onClose}>
@@ -97,7 +39,7 @@ const FoodPopup = ({
 
         <div className="food-popup-img-wrap">
           <img
-            src={`${url}/images/${food.image}`}
+            src={`${backendUrl}/images/${food.image}`}
             alt={food.name}
             className="food-popup-img"
           />
@@ -123,6 +65,33 @@ const FoodPopup = ({
                   </button>
                 ))}
               </div>
+              {/* ==== CRUST (RADIO BUTTONS) ==== */}
+              {food.crust?.enabled && food.crust.list?.length > 0 && (
+                <div className="food-popup-section">
+                  <div className="food-popup-label">Đế bánh (Crust)</div>
+
+                  <div className="food-popup-crust-options">
+                    {food.crust.list.map((c, i) => (
+                      <label key={i} className="food-popup-crust-item">
+                        <input
+                          type="radio"
+                          name="crust"
+                          checked={selectedCrust?.label === c.label}
+                          onChange={() => setSelectedCrust(c)}
+                        />
+
+                        <span className="crust-name">{c.label}</span>
+
+                        {c.price > 0 && (
+                          <span className="crust-price">
+                            +{c.price.toLocaleString()}đ
+                          </span>
+                        )}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -134,21 +103,21 @@ const FoodPopup = ({
                   <label
                     key={i}
                     className={`food-popup-option ${
-                      selectedOptions.includes(opt.label) ? "selected" : ""
+                      selectedToppings.some((t) => t.label === opt.label)
+                        ? "selected"
+                        : ""
                     }`}
                   >
                     <input
                       type="checkbox"
-                      checked={selectedOptions.includes(opt.label)}
-                      onChange={(e) =>
-                        setSelectedOptions((prev) =>
-                          e.target.checked
-                            ? [...prev, opt.label]
-                            : prev.filter((o) => o !== opt.label)
-                        )
-                      }
+                      checked={selectedToppings.some(
+                        (t) => t.label === opt.label
+                      )}
+                      onChange={() => toggleTopping(opt)}
                     />
+
                     <span>{opt.label}</span>
+
                     {opt.price > 0 && (
                       <span className="option-price">
                         {opt.price.toLocaleString()} đ
@@ -172,22 +141,20 @@ const FoodPopup = ({
 
           <div className="food-popup-bottom">
             <div className="food-popup-quantity-section">
-              <div className="food-popup-quantity-and-total">
-                <div className="food-popup-quantity">
-                  <button
-                    className="food-popup-qty-btn"
-                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                  >
-                    -
-                  </button>
-                  <span className="food-popup-qty-value">{quantity}</span>
-                  <button
-                    className="food-popup-qty-btn"
-                    onClick={() => setQuantity((q) => q + 1)}
-                  >
-                    +
-                  </button>
-                </div>
+              <div className="food-popup-quantity">
+                <button
+                  className="food-popup-qty-btn"
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                >
+                  -
+                </button>
+                <span className="food-popup-qty-value">{quantity}</span>
+                <button
+                  className="food-popup-qty-btn"
+                  onClick={() => setQuantity((q) => q + 1)}
+                >
+                  +
+                </button>
               </div>
             </div>
 

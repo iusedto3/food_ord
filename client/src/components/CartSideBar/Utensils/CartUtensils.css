@@ -1,0 +1,9 @@
+.utensil-box {
+    cursor: pointer;
+    margin-bottom: 15px;
+}
+
+.utensil-box p {
+    font-size: 14px;
+    opacity: 0.8;
+}

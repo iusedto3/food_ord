@@ -3,7 +3,7 @@ import "./FoodSection.css";
 import FoodItem from "../FoodItem/FoodItem";
 import defaultBanner from "/Pizza.png";
 
-const FoodSection = ({ category, items, onFoodClick }) => {
+const FoodSection = ({ category, items, onFoodClick, url, token }) => {
   if (!Array.isArray(items) || items.length === 0) return null;
 
   const bannerMap = {
@@ -34,6 +34,8 @@ const FoodSection = ({ category, items, onFoodClick }) => {
               description={food.description}
               price={food.price}
               image={food.image}
+              url={url}
+              token={token}
             />
           </div>
         ))}

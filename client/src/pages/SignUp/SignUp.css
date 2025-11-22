@@ -1,0 +1,116 @@
+.signup-container {
+    width: 100%;
+    min-height: 100vh;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 40px;
+}
+
+.signup-title {
+    text-align: center;
+    font-size: 28px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+/* Card form */
+.signup-card {
+    width: 420px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 32px;
+    box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* Form */
+.signup-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.signup-error {
+    text-align: center;
+    color: red;
+    margin-bottom: 8px;
+}
+
+/* Input group */
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #555;
+}
+
+.form-group input {
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 15px;
+    transition: box-shadow 0.3s;
+}
+
+.form-group input:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(255, 107, 71, 0.3);
+    border-color: tomato;
+}
+
+/* Checkbox */
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+}
+
+/* Button */
+.signup-btn {
+    padding: 14px;
+    background: tomato;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.2s;
+}
+
+.signup-btn:hover {
+    background: #e0442a;
+    transform: translateY(-2px);
+}
+
+.signup-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Link */
+.signup-link {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 15px;
+}
+
+.signup-link span {
+    color: tomato;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.signup-success-message {
+    color: green;
+    text-align: center;
+    margin-bottom: 12px;
+    font-weight: 600;
+}

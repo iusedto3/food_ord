@@ -1,0 +1,124 @@
+.checkout-section {
+    margin-bottom: 25px;
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.address-list {
+    background: #ffffff;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #ececec;
+}
+
+.address-item {
+    padding: 16px;
+    border-bottom: 1px solid #f3f3f3;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.address-item:hover {
+    background: #fafafa;
+}
+
+.address-item.active {
+    background: #fff8e6;
+    border-left: 4px solid #ff7a00;
+}
+
+.address-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.label {
+    font-weight: 600;
+}
+
+.default-tag {
+    background: #ff7a00;
+    color: white;
+    font-size: 12px;
+    border-radius: 4px;
+    padding: 2px 6px;
+}
+
+.address-text {
+    margin: 6px 0 2px;
+    font-size: 14px;
+}
+
+.phone-text {
+    margin: 0;
+    font-size: 13px;
+    color: #555;
+}
+
+.add-new-btn {
+    margin-top: 10px;
+    padding: 14px;
+    background: #fdfdfd;
+    text-align: center;
+    border: 1px dashed #ccc;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.add-new-btn:hover {
+    background: #f7f7f7;
+}
+
+.section-box {
+    margin-top: 15px;
+    background: white;
+    padding: 18px;
+    border-radius: 10px;
+    box-shadow: 0 0 0 1px #eee;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.section-box input,
+.section-box textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #dcdcdc;
+    border-radius: 8px;
+    font-size: 15px;
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.checkbox-group input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin: 0;
+}
+
+.checkbox-group label {
+    font-size: 15px;
+    color: #555;
+    margin: 0;
+}
+
+.btn-save-address {
+    padding: 12px;
+    background: #ff7a00;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+}

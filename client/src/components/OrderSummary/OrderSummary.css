@@ -1,0 +1,120 @@
+.order-summary {
+    background-color: #ffffff;
+    padding: 24px;
+    border-radius: 12px;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+  
+  .summary-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 24px;
+    text-align: center;
+    color: #333;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  
+  .summary-items {
+    margin-bottom: 24px;
+    background-color: #f9f9f9;
+    padding: 16px;
+    border-radius: 8px;
+  }
+  
+  .summary-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  .summary-item:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+  
+  .summary-item-image {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-right: 16px;
+  }
+  
+  .summary-item-details {
+    flex-grow: 1;
+  }
+  
+  .summary-item-name {
+    display: block;
+    font-weight: 600;
+    font-size: 16px;
+    color: #333;
+  }
+  
+  .summary-item-sub {
+    font-size: 14px;
+    color: #888;
+    margin-top: 4px;
+  }
+
+  .summary-item-quantity {
+    font-size: 14px;
+    color: #888;
+  }
+  
+  .summary-item-price {
+    font-weight: 700;
+    font-size: 16px;
+    color: #000;
+  }
+  
+  .summary-total {
+    padding-top: 16px;
+    border-top: 1px solid #e0e0e0;
+    margin-top: 16px;
+  }
+
+  .summary-total-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 16px;
+    color: #555;
+  }
+
+  .summary-total-row span:first-child {
+    flex-grow: 1;
+    text-align: left;
+  }
+
+  .summary-total-row span:last-child {
+    text-align: right;
+  }
+
+  .discount-row {
+    color: green;
+    font-weight: 600;
+  }
+  
+  .summary-total-row.total-row {
+    font-size: 17px; /* Adjusted to match CartSummary */
+    font-weight: bold;
+    border-top: none; /* Removed for consistency */
+    padding-top: 0; /* Removed for consistency */
+    margin-top: 12px;
+    color: #333;
+  }
+
+  .summary-total-row.total-row span:first-child { /* New rule for Total label */
+    font-weight: bold;
+  }
+
+  .summary-total-row.total-row span:last-child {
+    color: #000;
+  }
+   

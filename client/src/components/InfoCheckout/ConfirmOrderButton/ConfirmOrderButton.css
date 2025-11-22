@@ -1,0 +1,16 @@
+.confirm-btn {
+    width: 100%;
+    padding: 14px;
+    background: #e4002b;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 20px;
+}
+
+.confirm-btn.loading {
+    opacity: 0.7;
+    cursor: not-allowed;
+}

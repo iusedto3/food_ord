@@ -1,15 +1,40 @@
-.navbar{
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 25px;
+    background-color: #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.logo {
+    height: 45px;
+}
+
+.profile {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 15px;
+    object-fit: cover;
+}
+
+.navbar-right {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 8px 4%;
+    gap: 10px;
 }
 
-.navbar .log {
-    width: max(10%, 80px);
-    
+.logout-btn {
+    background: #ff4d4f;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: background 0.2s;
 }
 
-.navbar .profile{
-    width: 40px;
+.logout-btn:hover {
+    background: #e63946;
 }

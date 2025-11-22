@@ -1,0 +1,15 @@
+.myprofile-container {
+  display: flex;
+  max-width: 1200px;
+  margin: 20px auto;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  background-color: #fff;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.myprofile-content {
+  flex-grow: 1;
+  padding: 20px;
+}

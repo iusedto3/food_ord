@@ -1,0 +1,50 @@
+.success-container {
+    display: flex;
+    justify-content: center;
+    padding-top: 50px;
+    padding-bottom: 60px;
+}
+
+.success-box {
+    text-align: center;
+    max-width: 450px;
+    width: 100%;
+    background: white;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+}
+
+.success-gif {
+    width: 120px;
+    margin-bottom: 20px;
+}
+
+.order-id {
+    margin-top: 10px;
+    font-size: 18px;
+}
+
+.success-actions {
+    margin-top: 30px;
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+}
+
+.track-btn,
+.home-btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+}
+
+.track-btn {
+    background-color: #ff6600;
+    color: white;
+}
+
+.home-btn {
+    background-color: #eee;
+}

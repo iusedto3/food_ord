@@ -1,131 +1,141 @@
 import userModel from "../models/userModel.js";
 import foodModel from "../models/foodModel.js";
 
-// 🧺 Thêm món vào giỏ hàng
-export const addToCart = async (req, res) => {
-  try {
-    const { userId, itemId, size, toppings = [], note = "", quantity = 1 } = req.body;
-
-    const user = await userModel.findById(userId);
-    if (!user) return res.json({ success: false, message: "Không tìm thấy người dùng" });
-
-    const food = await foodModel.findById(itemId);
-    if (!food) return res.json({ success: false, message: "Không tìm thấy món ăn" });
-
-    // 🧮 Tính giá tiền
-    const toppingTotal = toppings.reduce((sum, t) => sum + (t.price || 0), 0);
-    const basePrice = Number(food.price);
-    const totalPrice = (basePrice + toppingTotal) * quantity;
-
-    // 🧩 Kiểm tra món tương tự đã tồn tại chưa (id + size + toppings + note)
-    const existingItem = user.cartData.find(
-      (i) =>
-        i.itemId.toString() === itemId &&
-        i.size === size &&
-        JSON.stringify(i.toppings) === JSON.stringify(toppings) &&
-        i.note === note
-    );
-
-    if (existingItem) {
-      // Nếu trùng thì cộng dồn số lượng và giá
-      existingItem.quantity += quantity;
-      existingItem.totalPrice += totalPrice;
-    } else {
-      // Nếu chưa có, thêm mới vào giỏ
-      const newItem = {
-        itemId,
-        name: food.name,
-        size,
-        toppings,
-        note,
-        quantity,
-        basePrice,
-        totalPrice,
-        image: food.image,
-      };
-      user.cartData.push(newItem);
-    }
-
-    await user.save();
-    res.json({
-      success: true,
-      message: "Đã thêm vào giỏ hàng",
-      cartData: user.cartData,
-    });
-  } catch (err) {
-    console.error("❌ Lỗi khi thêm vào giỏ hàng:", err);
-    res.json({ success: false, message: "Lỗi khi thêm vào giỏ hàng" });
-  }
-};
-
-// 🗑️ Xóa món khỏi giỏ (dựa theo index)
-export const removeFromCart = async (req, res) => {
-  try {
-    const { userId, itemIndex } = req.body;
-    const user = await userModel.findById(userId);
-    if (!user) return res.json({ success: false, message: "Không tìm thấy người dùng" });
-
-    if (itemIndex < 0 || itemIndex >= user.cartData.length) {
-      return res.json({ success: false, message: "Món ăn không tồn tại trong giỏ" });
-    }
-
-    user.cartData.splice(itemIndex, 1);
-    await user.save();
-
-    res.json({
-      success: true,
-      message: "Đã xoá món khỏi giỏ hàng",
-      cartData: user.cartData,
-    });
-  } catch (err) {
-    console.error("❌ Lỗi khi xoá khỏi giỏ hàng:", err);
-    res.json({ success: false, message: "Lỗi khi xoá món ăn" });
-  }
-};
-
-// 📦 Lấy giỏ hàng của người dùng
+// ===================== GET CART =====================
 export const getCart = async (req, res) => {
   try {
     const { userId } = req.body;
-    const user = await userModel.findById(userId);
-    if (!user) return res.json({ success: false, message: "Không tìm thấy người dùng" });
 
-    res.json({
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return res.json({ success: false, message: "Không tìm thấy người dùng" });
+    }
+
+    return res.json({
       success: true,
-      cartData: user.cartData,
+      cartData: user.cart || []
     });
   } catch (err) {
-    console.error("❌ Lỗi khi lấy giỏ hàng:", err);
-    res.json({ success: false, message: "Không thể tải giỏ hàng" });
+    console.error("getCart error:", err);
+    res.json({ success: false, message: "Lỗi server!" });
   }
 };
 
-
-export const updateCartItem = async (req, res) => {
+// ===================== ADD TO CART =====================
+export const addToCart = async (req, res) => {
   try {
-    const { userId, itemIndex, updatedItem } = req.body;
-    const user = await userModel.findById(userId);
-    if (!user) return res.json({ success: false, message: "Không tìm thấy người dùng" });
+    const {
+      userId,
+      _id: itemId,
+      size,
+      crust,
+      toppings = [],
+      note = "",
+      quantity = 1,
+      totalPrice,
+    } = req.body;
 
-    if (itemIndex < 0 || itemIndex >= user.cartData.length) {
-      return res.json({ success: false, message: "Món ăn không tồn tại trong giỏ" });
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return res.json({ success: false, message: "Không tìm thấy người dùng" });
     }
 
-    // 🧩 Gộp dữ liệu mới
-    user.cartData[itemIndex] = {
-      ...user.cartData[itemIndex],
-      ...updatedItem
-    };
+    if (!user.cart) user.cart = [];
+
+    const food = await foodModel.findById(itemId);
+    if (!food) {
+      return res.json({ success: false, message: "Không tìm thấy món ăn" });
+    }
+
+    const existingIndex = user.cart.findIndex(
+      (item) =>
+        item._id.toString() === itemId &&
+        item.size === size &&
+        JSON.stringify(item.crust) === JSON.stringify(crust) &&
+        JSON.stringify(item.toppings) === JSON.stringify(toppings) &&
+        item.note === note
+    );
+
+    if (existingIndex !== -1) {
+      user.cart[existingIndex].quantity += quantity;
+      user.cart[existingIndex].totalPrice = totalPrice * user.cart[existingIndex].quantity;
+    } else {
+      user.cart.push({
+        _id: itemId,
+        name: food.name,
+        image: food.image,
+        size,
+        crust,
+        toppings,
+        note,
+        quantity,
+        price: food.price,
+        totalPrice,
+      });
+    }
 
     await user.save();
 
-    res.json({
+    return res.json({
       success: true,
-      message: "Đã cập nhật món trong giỏ hàng",
-      cartData: user.cartData
+      message: "Đã thêm vào giỏ hàng",
+      cartData: user.cart
     });
   } catch (err) {
-    console.error("❌ Lỗi khi cập nhật giỏ hàng:", err);
-    res.json({ success: false, message: "Lỗi khi cập nhật món ăn" });
+    console.error("addToCart error:", err);
+    res.json({ success: false, message: "Lỗi server!" });
+  }
+};
+
+// ===================== REMOVE FROM CART =====================
+export const removeFromCart = async (req, res) => {
+  try {
+    const { userId, itemIndex } = req.body;
+
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return res.json({ success: false, message: "Không tìm thấy người dùng" });
+    }
+
+    if (!user.cart || itemIndex < 0 || itemIndex >= user.cart.length) {
+      return res.json({ success: false, message: "Món ăn không tồn tại trong giỏ" });
+    }
+
+    user.cart.splice(itemIndex, 1);
+    await user.save();
+
+    return res.json({
+      success: true,
+      message: "Đã xoá món khỏi giỏ hàng",
+      cartData: user.cart
+    });
+  } catch (err) {
+    console.error("removeFromCart error:", err);
+    res.json({ success: false, message: "Lỗi server!" });
+  }
+};
+
+// ===================== UPDATE CART ITEM =====================
+export const updateCartItem = async (req, res) => {
+  try {
+    const { userId, index, updatedItem } = req.body;
+
+    const user = await userModel.findById(userId);
+    if (!user) return res.json({ success: false, message: "Không tìm thấy người dùng" });
+
+    if (!user.cart || index < 0 || index >= user.cart.length) {
+      return res.json({ success: false, message: "Món ăn không tồn tại trong giỏ" });
+    }
+
+    user.cart[index] = updatedItem;
+    await user.save();
+
+    return res.json({
+      success: true,
+      cartData: user.cart
+    });
+  } catch (err) {
+    console.error("updateCartItem error:", err);
+    res.json({ success: false, message: "Lỗi server!" });
   }
 };

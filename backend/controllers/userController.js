@@ -2,6 +2,14 @@ import userModel from "../models/userModel.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import validation from "validator";
+import crypto from "crypto";
+import nodemailer from "nodemailer";
+import VerificationToken from "../models/verificationTokenModel.js";
+import ResetToken from "../models/resetTokenModel.js";
+
+const createToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+};
 
 //login
 const loginUser = async (req, res) => {
@@ -28,48 +36,271 @@ const loginUser = async (req, res) => {
     }
 }
 
-const createToken = (id) => {
-    return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+const registerUser = async (req, res) => {
+  try {
+    const { name, email, password, phone } = req.body;
+
+    const exists = await userModel.findOne({ email });
+    if (exists) {
+      return res.json({ success: false, message: "Email đã tồn tại!" });
+    }
+
+    const hashed = await bcrypt.hash(password, 10);
+    const newUser = await userModel.create({
+      name,
+      email,
+      phone,
+      password: hashed,
+      isVerified: false
+    });
+
+    // xoá token cũ nếu có
+    await VerificationToken.deleteMany({ userId: newUser._id });
+
+    // tạo token
+    const token = crypto.randomBytes(32).toString("hex");
+
+    await VerificationToken.create({
+      userId: newUser._id,
+      token,
+      expiresAt: Date.now() + 10 * 60 * 1000 // 10 phút
+    });
+
+    const verifyLink = `http://localhost:5173/verify-email/${token}`;
+
+    // gửi email
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Xác thực tài khoản của bạn",
+      html: `
+        <h2>Xác thực tài khoản</h2>
+        <p>Nhấp vào link bên dưới để xác thực tài khoản:</p>
+        <a href="${verifyLink}">${verifyLink}</a>
+        <p>Link có hiệu lực trong 10 phút.</p>
+      `
+    });
+
+    res.json({ success: true, message: "Đăng ký thành công! Vui lòng kiểm tra email để xác thực." });
+
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: "Lỗi server!" });
+  }
+};
+const checkEmail = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.json({ success: false, message: "Thiếu email" });
+        }
+
+        const exists = await userModel.findOne({ email });
+
+        if (exists) {
+            return res.json({ success: true, exists: true });
+        }
+
+        return res.json({ success: true, exists: false });
+
+    } catch (error) {
+        console.log(error);
+        return res.json({ success: false, message: error.message });
+    }
 };
 
-//register
-const registerUser = async (req, res) => {
-    const { name, email, password } = req.body;
+export const verifyEmail = async (req, res) => {
+  try {
+    const token = req.params.token;
 
-    try{
-        // check if user already exists
-        const exists = await userModel.findOne({email});
-        if(exists){
-            return res.json({success: false, message: "Tài khoản đã tồn tại!"});
-        }
-
-        // validate email
-        if(!validation.isEmail(email)){
-            return res.json({success: false, message: "Email không hợp lệ!"});
-        }
-
-        if(password.length < 8){
-            return res.json({success: false, message: "Mật khẩu phải có ít nhất 8 ký tự!"});
-        }
-        // hash password
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
-        const newUser = new userModel({
-            name: name,
-            email: email,
-            password: hashedPassword
-        })
-
-        const user = await newUser.save();
-        const token = createToken(user._id);
-        res.json({success: true, token});
-    
-    } catch(error){
-        console.log(error);
-        res.json({success: false, message: error.message});
+    const record = await VerificationToken.findOne({ token });
+    if (!record) {
+      return res.json({ success: false, message: "Token không hợp lệ!" });
     }
+
+    if (record.expiresAt < Date.now()) {
+      return res.json({ success: false, message: "Token đã hết hạn!" });
+    }
+
+    await userModel.findByIdAndUpdate(record.userId, { isVerified: true });
+    await VerificationToken.findByIdAndDelete(record._id);
+
+    res.json({ success: true, message: "Xác thực tài khoản thành công!" });
+
+  } catch (error) {
+    res.json({ success: false, message: "Lỗi server!" });
+  }
+};
+
+const sendResetLink = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return res.json({ success: false, message: "Email không tồn tại!" });
+    }
+
+    await ResetToken.deleteMany({ userId: user._id });
+
+    const token = crypto.randomBytes(32).toString("hex");
+
+    await ResetToken.create({
+      userId: user._id,
+      token,
+      expiresAt: Date.now() + 10 * 60 * 1000
+    });
+
+    const link = `http://localhost:5173/reset-password/${token}`;
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Đặt lại mật khẩu",
+      html: `
+        <h2>Đặt lại mật khẩu</h2>
+        <p>Nhấn vào link bên dưới để tạo mật khẩu mới:</p>
+
+        <a
+          href="${link}"
+          style="
+            display: inline-block;
+            padding: 10px 16px;
+            background: #e4002b;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+          "
+        >
+          Đặt lại mật khẩu
+        </a>
+
+        <p>Liên kết này hết hạn sau <strong>10 phút</strong>.</p>
+      `
+    });
+
+    return res.json({ success: true, message: "Email đặt lại mật khẩu đã được gửi!" });
+
+  } catch (err) {
+    console.log(err);
+    res.json({ success: false, message: "Lỗi server!" });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { newPassword } = req.body;
+
+    const resetRecord = await ResetToken.findOne({ token });
+
+    if (!resetRecord) {
+      return res.json({ success: false, message: "Token không hợp lệ!" });
+    }
+
+    if (resetRecord.expiresAt < Date.now()) {
+      await ResetToken.deleteMany({ token });
+      return res.json({ success: false, message: "Token đã hết hạn!" });
+    }
+
+    const user = await userModel.findById(resetRecord.userId);
+    if (!user) {
+      return res.json({ success: false, message: "Người dùng không tồn tại!" });
+    }
+
+    // Hash mật khẩu mới
+    const salt = await bcrypt.genSalt(10);
+    const hashed = await bcrypt.hash(newPassword, salt);
+
+    user.password = hashed;
+    await user.save();
+
+    await ResetToken.deleteMany({ userId: user._id });
+
+    return res.json({ success: true, message: "Đổi mật khẩu thành công!" });
+
+  } catch (err) {
+    res.json({ success: false, message: "Lỗi server!" });
+  }
+};
+
+const getUser = async (req, res) => {
+  try {
+    const user = await userModel.findById(req.body.userId);
+    if (!user) {
+      return res.json({ success: false, message: "Người dùng không tồn tại!" });
+    }
+    res.json({ success: true, user });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: "Lỗi server!" });
+  }
 }
 
+// updateProfile
+const updateProfile = async (req, res) => {
+  try {
+    const { name, phone } = req.body;
+    const user = await userModel.findById(req.body.userId);
 
-export { loginUser, registerUser };
+    if (!user) {
+      return res.json({ success: false, message: "Người dùng không tồn tại!" });
+    }
+
+    user.name = name || user.name;
+    user.phone = phone || user.phone;
+
+    await user.save();
+    res.json({ success: true, message: "Thông tin cá nhân đã được cập nhật!" });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: "Lỗi server!" });
+  }
+};
+
+// changePassword
+const changePassword = async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    const user = await userModel.findById(req.body.userId);
+
+    if (!user) {
+      return res.json({ success: false, message: "Người dùng không tồn tại!" });
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return res.json({ success: false, message: "Mật khẩu cũ không đúng!" });
+    }
+
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedNewPassword;
+    await user.save();
+
+    res.json({ success: true, message: "Mật khẩu đã được đổi thành công!" });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: "Lỗi server!" });
+  }
+};
+
+
+export { loginUser, registerUser, checkEmail, sendResetLink, resetPassword, getUser, updateProfile, changePassword };

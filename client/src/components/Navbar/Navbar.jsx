@@ -1,84 +1,126 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect, useRef } from "react";
 import "./Navbar.css";
-import { assets } from "../../assets/assets";
-import { Link, useNavigate } from "react-router-dom";
+import { BiCart, BiSolidUserDetail } from "react-icons/bi";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { StoreContext } from "../../contexts/StoreContext";
+import { assets } from "../../assets/assets";
 
 const Navbar = ({ setShowLogin }) => {
-  const [menu, setMenu] = useState("menu");
-  const [openProfile, setOpenProfile] = useState(false); // 👈 thêm state mới
-
-  const { getTotalCartAmount, token, setToken } = useContext(StoreContext);
+  const { token, setToken, cartItems } = useContext(StoreContext);
+  const [openDropdown, setOpenDropdown] = useState(false);
   const navigate = useNavigate();
+  const dropdownRef = useRef(null);
+  const location = useLocation();
 
+  // 🧩 Tính tổng số lượng món trong giỏ
+  const totalItems = Object.values(cartItems || {}).reduce((sum, item) => {
+    return sum + (item.quantity || 0);
+  }, 0);
+
+  // 🔐 Đăng xuất
   const logout = () => {
     localStorage.removeItem("token");
     setToken("");
+    setOpenDropdown(false);
     navigate("/");
   };
 
+  // Đóng dropdown khi click bên ngoài
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setOpenDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const showIcons = !["/cart", "/checkout"].includes(location.pathname);
+
   return (
     <div className="navbar">
-      <Link to="/">
-        <img src={assets.logo} alt="logo" className="logo" />
-      </Link>
-      <ul className="navbar-menu">
-        <Link
-          to="/"
-          onClick={() => setMenu("home")}
-          className={menu === "home" ? "active" : ""}
-        >
-          Trang Chủ
+      {/* 🏠 Logo giữa */}
+      <div className="navbar-center">
+        <Link to="/">
+          <img src={assets.logo} alt="Logo" className="navbar-logo" />
         </Link>
-        <a
-          href="#explore-menu"
-          onClick={() => setMenu("menu")}
-          className={menu === "menu" ? "active" : ""}
-        >
-          Thực Đơn
-        </a>
-        <a
-          href="#footer"
-          onClick={() => setMenu("contact-us")}
-          className={menu === "contact-us" ? "active" : ""}
-        >
-          Liên hệ với chúng tôi
-        </a>
-      </ul>
+      </div>
 
-      <div className="navbar-right">
-        <img src={assets.search_icon} alt="" />
-        <div className="navbar-search-icon">
-          <Link to="/cart">
-            <img src={assets.basket_icon} alt="" />
-          </Link>
-          <div className={getTotalCartAmount() === 0 ? "" : "dot"}></div>
-        </div>
+      {/* 🛒 & 👤 Phải */}
+      {showIcons && (
+        <div className="navbar-right">
+          <div className="navbar-cart">
+            <Link to="/cart">
+              <BiCart className="icon" />
+              {totalItems > 0 && (
+                <span className="cart-badge">{totalItems}</span>
+              )}
+            </Link>
+          </div>
 
-        {!token ? (
-          <button onClick={() => setShowLogin(true)}>Đăng Nhập</button>
-        ) : (
-          <div className="navbar-profile">
-            <img
-              src={assets.profile_icon}
-              alt=""
-              className="profile-icon"
-              onClick={() => setOpenProfile(!openProfile)} // 👈 click toggle
+          <div className="navbar-profile" ref={dropdownRef}>
+            <BiSolidUserDetail
+              className={`icon profile-icon ${openDropdown ? "open" : ""} ${
+                token ? "logged-in" : ""
+              }`}
+              onClick={() => setOpenDropdown(!openDropdown)}
             />
-            {openProfile && ( // 👈 chỉ hiển thị khi openProfile = true
-              <ul className="nav-profile-dropdown">
-                <li>
-                  <img src={assets.bag_icon} alt="bag" /> Đặt Hàng
-                </li>
-                <hr />
-                <li onClick={logout}>
-                  <img src={assets.logout_icon} alt="logout" /> Đăng Xuất
-                </li>
+            {openDropdown && (
+              <ul className={`dropdown ${openDropdown ? "open" : ""}`}>
+                {!token ? (
+                  <>
+                    <li>
+                      <Link
+                        to="/sign-in"
+                        onClick={() => setOpenDropdown(false)}
+                      >
+                        Đăng nhập
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/sign-up"
+                        onClick={() => setOpenDropdown(false)}
+                      >
+                        Đăng ký
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/track-order"
+                        onClick={() => setOpenDropdown(false)}
+                      >
+                        Theo dõi đơn hàng
+                      </Link>
+                    </li>
+                  </>
+                ) : (
+                  <>
+                    <li>
+                      <Link
+                        to="/myprofile"
+                        onClick={() => setOpenDropdown(false)}
+                      >
+                        Thông tin cá nhân
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/track-order"
+                        onClick={() => setOpenDropdown(false)}
+                      >
+                        Theo dõi đơn hàng
+                      </Link>
+                    </li>
+                    <li onClick={logout}>Đăng xuất</li>
+                  </>
+                )}
               </ul>
             )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

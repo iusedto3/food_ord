@@ -1,0 +1,145 @@
+/* phủ nền */
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+/* khung modal */
+.modal-container {
+    width: 450px;
+    max-height: 85vh;
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    overflow-y: auto;
+    animation: fadeIn 0.25s ease;
+}
+
+/* header */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.close-btn {
+    font-size: 24px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #333;
+}
+
+.close-btn:hover {
+    color: #ff4d4f;
+}
+
+/* item */
+.food-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.food-item {
+    display: flex;
+    gap: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #eee;
+}
+
+/* hình món */
+.food-img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+/* info */
+.food-info {
+    flex: 1;
+}
+
+.food-name {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 600;
+}
+
+.food-sub {
+    margin: 2px 0;
+    font-size: 14px;
+}
+
+.food-qty,
+.food-price {
+    margin: 4px 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.status-select {
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: none;
+    font-weight: bold;
+    color: #fff;
+}
+
+/* Màu trạng thái */
+.status-select.preparing {
+    background: #ffb300;
+    /* vàng Grab */
+}
+
+.status-select.delivering {
+    background: #007bff;
+    /* xanh Baemin */
+}
+
+.status-select.completed {
+    background: #00c853;
+    /* xanh hoàn thành */
+}
+
+.status-select.canceled {
+    background: #d32f2f;
+    /* đỏ hủy */
+}
+
+/* in hóa đơn */
+.invoice-btn {
+    margin-top: 15px;
+    width: 100%;
+    padding: 10px;
+    background: #673ab7;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+.invoice-btn:hover {
+    opacity: 0.9;
+}

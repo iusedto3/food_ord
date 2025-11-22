@@ -1,20 +1,26 @@
 import React, { useContext, useState } from "react";
 import "./FoodDisplay.css";
-import { StoreContext } from "../../contexts/StoreContext";
+import useFood from "../../hooks/useFood";
 import FoodItem from "../FoodItem/FoodItem";
 import FoodPopup from "../FoodPopup/FoodPopup";
 import bannerDefault from "/Pizza.png";
+import { StoreContext } from "../../contexts/StoreContext";
 
 const FoodDisplay = () => {
-  const { food_list } = useContext(StoreContext);
+  const { url, token } = useContext(StoreContext);
+  const { foodList, loading } = useFood(url);
   const [selectedFood, setSelectedFood] = useState(null);
   const [showPopup, setShowPopup] = useState(false);
 
-  if (!Array.isArray(food_list) || food_list.length === 0) {
+  if (loading) {
     return <p className="loading-text">Đang tải thực đơn...</p>;
   }
 
-  const categories = [...new Set(food_list.map((f) => f.category))];
+  if (!Array.isArray(foodList) || foodList.length === 0) {
+    return <p className="loading-text">Không có món ăn nào!</p>;
+  }
+
+  const categories = [...new Set(foodList.map((f) => f.category))];
 
   const handleFoodClick = (food) => {
     setSelectedFood(food);
@@ -24,7 +30,7 @@ const FoodDisplay = () => {
   return (
     <div className="food-display">
       {categories.map((cat) => {
-        const items = food_list.filter((item) => item.category === cat);
+        const items = foodList.filter((item) => item.category === cat);
         return (
           <section key={cat} id={cat} className="food-section">
             <h2 className="food-section-title">{cat}</h2>
@@ -43,6 +49,8 @@ const FoodDisplay = () => {
                   price={food.price}
                   image={food.image}
                   onClick={() => handleFoodClick(food)}
+                  url={url}
+                  token={token}
                 />
               ))}
             </div>

@@ -24,6 +24,31 @@ const ExploreMenu = ({ category, setCategory }) => {
     fetchCategories();
   }, []);
 
+  // 🔹 Xử lý sticky menu
+  useEffect(() => {
+    const handleScroll = () => {
+      const menu = document.getElementById("explore-menu");
+      if (menu) {
+        // Lấy vị trí top ban đầu của menu
+        const sticky = menu.offsetTop;
+
+        // So sánh vị trí cuộn với vị trí top của menu
+        if (window.pageYOffset > sticky) {
+          menu.classList.add("is-sticky");
+        } else {
+          menu.classList.remove("is-sticky");
+        }
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+
+    // Cleanup function
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
   // 🔹 Khi click danh mục: chỉ đổi state và scroll đến section tương ứng
   const handleClick = (cat) => {
     setCategory(cat);
@@ -38,7 +63,7 @@ const ExploreMenu = ({ category, setCategory }) => {
     setTimeout(() => {
       const section = document.getElementById(cat);
       if (section) {
-        const yOffset = -80;
+        const yOffset = -80; // khoảng cách offset
         const y =
           section.getBoundingClientRect().top + window.pageYOffset + yOffset;
         window.scrollTo({ top: y, behavior: "smooth" });

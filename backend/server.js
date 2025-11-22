@@ -7,6 +7,10 @@ import 'dotenv/config.js';
 import cartRouter from './routes/cartRoute.js';
 import orderRouter from './routes/orderRoute.js';
 import promotionRouter from './routes/promotionRoute.js';
+import adminRoute from "./routes/adminRoute.js";
+import addressRoute from "./routes/addressRoute.js";
+
+
 //app config
 const app = express();
 const port = 4000
@@ -25,7 +29,10 @@ app.use("/api/user",userRouter);
 app.use("/api/cart",cartRouter);
 app.use("/api/order",orderRouter);
 app.use("/api/promotion",promotionRouter);
+app.use("/api/admin", adminRoute);
 
+app.use("/api/address", addressRoute);
+//kiem tra ket noi backend
 app.get("/",(req,res)=>{
     res.send("Hello from backend")
 })
@@ -33,4 +40,6 @@ app.get("/",(req,res)=>{
 app.listen(port,()=>{
     console.log(`Listening on localhost:${port}`);
 })
+
+
 

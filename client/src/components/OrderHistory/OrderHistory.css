@@ -1,0 +1,90 @@
+.order-history-container {
+    padding: 20px;
+}
+
+.order-history-container h2 {
+    font-size: 2em;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.order-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.order-history-item {
+    display: grid;
+    grid-template-columns: 0.5fr 2fr 1fr 1fr 1fr;
+    align-items: center;
+    gap: 20px;
+    padding: 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #fff;
+    transition: box-shadow 0.3s;
+}
+
+.order-history-item:hover {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
+}
+
+.order-history-item img {
+    width: 50px;
+    opacity: 0.7;
+}
+
+.order-items {
+    font-size: 14px;
+    color: #555;
+}
+
+.order-amount {
+    font-weight: 600;
+    font-size: 16px;
+    color: tomato;
+}
+
+.order-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.status-preparing { background-color: #ffc107; }
+.status-delivering { background-color: #17a2b8; }
+.status-completed { background-color: #28a745; }
+.status-canceled { background-color: #dc3545; }
+
+
+.order-history-item button {
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    background-color: #ffe1e1;
+    cursor: pointer;
+    color: #454545;
+    font-weight: 500;
+    transition: background-color 0.3s;
+}
+
+.order-history-item button:hover {
+    background-color: #fdd4d4;
+}
+
+@media (max-width: 900px) {
+    .order-history-item {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    .order-history-item button {
+        justify-self: start;
+    }
+}

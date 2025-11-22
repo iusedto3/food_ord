@@ -1,0 +1,29 @@
+.badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: white;
+    text-transform: capitalize;
+}
+
+/* Màu từng trạng thái */
+.badge.preparing {
+    background: #ffb300;
+    /* vàng */
+}
+
+.badge.delivering {
+    background: #1976d2;
+    /* xanh dương */
+}
+
+.badge.completed {
+    background: #2e7d32;
+    /* xanh lá */
+}
+
+.badge.canceled {
+    background: #d32f2f;
+    /* đỏ */
+}

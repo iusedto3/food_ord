@@ -1,148 +1,135 @@
-.cart-items-container {
-  width: 100%;
-  background: #fff;
-  border-radius: 16px;
-  padding: 2rem;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
-  margin-bottom: 2.5rem;
-  transition: 0.3s ease;
-}
-
-.cart-items-container:hover {
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
-}
-
-/* --- Tiêu đề cột --- */
-.cart-items-title {
-  display: grid;
-  grid-template-columns: 1.2fr 2fr 1fr 1fr 1fr 0.5fr;
-  align-items: center;
+.cart-header {
+  background: #f8f8f8;
+  padding: 12px 16px;
   font-weight: 600;
-  color: #333;
-  padding: 1rem 1.25rem;
-  background: #f9f9f9;
-  border-radius: 10px;
-  font-size: 0.95rem;
+  font-size: 15px;
+  border-radius: 6px;
+  margin-bottom: 16px;
 }
 
-/* --- Hàng sản phẩm --- */
-.cart-items-row {
-  display: grid;
-  grid-template-columns: 1.2fr 2fr 1fr 1fr 1fr 0.5fr;
-  align-items: center;
-  gap: 1.25rem;
-  padding: 1.2rem 1rem;
-  border-bottom: 1px solid #eee;
-  transition: background 0.2s ease;
+.cart-item {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.3s;
 }
 
-.cart-items-row:hover {
-  background: #fafafa;
+.cart-item:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.cart-items-row img {
+.cart-item-img img {
   width: 80px;
   height: 80px;
   object-fit: cover;
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
-.cart-items-row p {
-  margin: 0;
-  color: #444;
+.cart-item-info {
+  flex: 1;
 }
 
-.cart-items-row .cross {
-  color: #ff4d4f;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 1.3rem;
-  transition: 0.25s;
-}
-
-.cart-items-row .cross:hover {
-  transform: scale(1.2);
-  color: #e63946;
-}
-
-/* --- Tổng cộng & Mã giảm giá --- */
-.cart-bottom {
+.cart-item-top {
   display: flex;
   justify-content: space-between;
-  flex-wrap: wrap;
-  margin-top: 2.5rem;
-  gap: 2rem;
+  align-items: flex-start;
 }
 
-.cart-total,
-.cart-promocode {
-  flex: 1;
-  min-width: 300px;
-}
-
-/* Tổng tiền */
-.cart-total h3 {
-  font-size: 1.2rem;
+.cart-item-name {
+  font-size: 17px;
   font-weight: 600;
-  color: #333;
+  margin-bottom: 6px;
 }
 
-.cart-total button {
-  background: #ff4d4f;
+.cart-item-main-price {
+  font-weight: 700;
+  color: #d70018;
+  white-space: nowrap;
+}
+
+.cart-item-options p {
+  font-size: 14px;
+  color: #555;
+  margin: 2px 0;
+}
+
+.edit-btn {
+  margin-top: 8px;
+  background: none;
   border: none;
-  color: #fff;
-  font-weight: 600;
-  padding: 0.9rem 1.6rem;
-  border-radius: 10px;
-  margin-top: 1rem;
+  color: #d70018;
+  font-size: 14px;
   cursor: pointer;
-  transition: 0.3s;
-  width: 100%;
-}
-
-.cart-total button:hover {
-  background: #e63946;
-  transform: translateY(-2px);
-}
-
-/* Mã giảm giá */
-.cart-promocode h3 {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #333;
-}
-
-.cart-promocode-input {
   display: flex;
-  gap: 0.6rem;
-  margin-top: 0.8rem;
+  align-items: center;
+  gap: 4px;
 }
 
-.cart-promocode-input input {
-  flex: 1;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  padding: 0.7rem;
-  font-size: 0.95rem;
-  outline: none;
-  transition: 0.2s;
+.edit-btn:hover {
+  text-decoration: underline;
 }
 
-.cart-promocode-input input:focus {
-  border-color: #ff4d4f;
+/* RIGHT SIDE */
+.cart-item-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
 }
 
-.cart-promocode-input button {
-  background: #000;
-  color: #fff;
+.cart-item-quantity {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.cart-item-price {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.remove-btn {
+  background: #ffe5e5;
   border: none;
-  border-radius: 10px;
-  padding: 0 1.25rem;
+  padding: 8px;
+  border-radius: 50%;
   cursor: pointer;
-  font-weight: 500;
-  transition: 0.3s;
-}E
+  transition: background 0.3s, transform 0.2s;
+}
 
-.cart-promocode-input button:hover {
-  background: #333;
+.remove-btn:hover {
+  background: #ffcccc;
+  transform: scale(1.1);
+}
+
+.empty-cart {
+  padding: 40px;
+  text-align: center;
+  color: #888;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.empty-cart p {
+  margin-bottom: 16px;
+}
+
+.empty-cart-link {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 12px 24px;
+  background: tomato;
+  color: white;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background 0.3s, transform 0.2s;
+}
+
+.empty-cart-link:hover {
+  background: #e0442a;
+  transform: translateY(-2px);
 }
