@@ -7,9 +7,16 @@ const SuccessSummary = ({ order }) => {
   }
 
   const items = order.items || [];
+
+  // 1. Tính toán các loại tiền
   const subtotal = items.reduce((s, it) => s + (it.totalPrice || 0), 0);
   const shipping = order.shippingFee || 0;
-  const total = subtotal + shipping;
+
+  // 👇 Lấy tiền giảm giá từ dữ liệu order (nếu không có thì bằng 0)
+  const discount = order.discountAmount || 0;
+
+  // 👇 Tính tổng tiền cuối cùng (Subtotal + Ship - Discount)
+  const total = Math.max(0, subtotal + shipping - discount);
 
   return (
     <div className="card success-summary">
@@ -31,6 +38,9 @@ const SuccessSummary = ({ order }) => {
               <img
                 src={`http://localhost:4000/images/${item.image}`}
                 alt={item.name}
+                onError={(e) => {
+                  e.target.src = "https://placehold.co/80x80?text=No+Img";
+                }}
               />
             </div>
 
@@ -38,21 +48,18 @@ const SuccessSummary = ({ order }) => {
             <div className="item-info">
               <div className="item-name">{item.name}</div>
 
-              {/* ⭐ Size KHÔNG in đậm */}
               {item.size && (
                 <div className="item-size">
                   <span>Kích cỡ: {item.size}</span>
                 </div>
               )}
 
-              {/* Crust / Đế bánh */}
               {item.crust && (
                 <div className="item-crust">
                   <span>Đế bánh: {item.crust.label}</span>
                 </div>
               )}
 
-              {/* Toppings */}
               {item.toppings?.length > 0 && (
                 <div className="item-toppings">
                   {item.toppings.map((tp, i) => (
@@ -63,7 +70,6 @@ const SuccessSummary = ({ order }) => {
                 </div>
               )}
 
-              {/* Ghi chú */}
               {item.note && (
                 <div className="item-note">
                   <em>Ghi chú: {item.note}</em>
@@ -87,6 +93,17 @@ const SuccessSummary = ({ order }) => {
           <span>{formatVND(subtotal)}</span>
         </div>
 
+        {/* 👇 BỔ SUNG: Dòng giảm giá (Chỉ hiện khi có discount) */}
+        {discount > 0 && (
+          <div className="summary-row discount">
+            <span>
+              Voucher giảm giá{" "}
+              {order.voucherCode ? `(${order.voucherCode})` : ""}
+            </span>
+            <span>-{formatVND(discount)}</span>
+          </div>
+        )}
+
         <div className="total-row">
           <span>Phí giao hàng</span>
           <span>{formatVND(shipping)}</span>
@@ -94,7 +111,13 @@ const SuccessSummary = ({ order }) => {
 
         <div
           className="total-row"
-          style={{ fontWeight: "700", fontSize: "18px" }}
+          style={{
+            fontWeight: "700",
+            fontSize: "18px",
+            marginTop: "10px",
+            borderTop: "1px solid #eee",
+            paddingTop: "10px",
+          }}
         >
           <span>Tổng cộng</span>
           <span>{formatVND(total)}</span>

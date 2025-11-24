@@ -7,6 +7,7 @@ import nodemailer from "nodemailer";
 import VerificationToken from "../models/verificationTokenModel.js";
 import ResetToken from "../models/resetTokenModel.js";
 
+
 const createToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
@@ -279,17 +280,57 @@ const updateProfile = async (req, res) => {
 // changePassword
 const changePassword = async (req, res) => {
   try {
-    const { oldPassword, newPassword } = req.body;
+    const { currentPassword, newPassword } = req.body;
     const user = await userModel.findById(req.body.userId);
 
     if (!user) {
       return res.json({ success: false, message: "Người dùng không tồn tại!" });
     }
 
-    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
       return res.json({ success: false, message: "Mật khẩu cũ không đúng!" });
+    }const listUsers = async (req, res) => {
+  try {
+    // Lấy tất cả user, loại bỏ trường password để bảo mật
+    // Sắp xếp người mới đăng ký lên đầu
+    const users = await userModel.find({}).select("-password").sort({ createdAt: -1 });
+    
+    // (Optional) Bạn có thể tính thêm tổng đơn hàng của user ở đây nếu muốn
+    // nhưng để đơn giản thì trả về list user trước.
+    
+    res.json({ success: true, data: users });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: "Lỗi server khi lấy danh sách user!" });
+  }
+};
+
+// ADMIN: Cập nhật trạng thái (Khóa / Mở khóa)
+const updateUserStatus = async (req, res) => {
+  try {
+    const { userId, isBlocked } = req.body;
+
+    const user = await userModel.findByIdAndUpdate(
+        userId, 
+        { isBlocked: isBlocked }, 
+        { new: true } // Trả về dữ liệu mới sau khi update
+    );
+
+    if (!user) {
+        return res.json({ success: false, message: "Không tìm thấy User" });
     }
+
+    res.json({ 
+        success: true, 
+        message: isBlocked ? "Đã khóa tài khoản thành công!" : "Đã mở khóa tài khoản!" 
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: "Lỗi server!" });
+  }
+};
 
     const hashedNewPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedNewPassword;
@@ -302,5 +343,110 @@ const changePassword = async (req, res) => {
   }
 };
 
+// ADMIN: Lấy danh sách user
+const listUsers = async (req, res) => {
+  try {
+    // Lấy tất cả user, loại bỏ trường password để bảo mật
+    // Sắp xếp người mới đăng ký lên đầu
+    const users = await userModel.find({}).select("-password").sort({ createdAt: -1 });
+    
+    // (Optional) Bạn có thể tính thêm tổng đơn hàng của user ở đây nếu muốn
+    // nhưng để đơn giản thì trả về list user trước.
+    
+    res.json({ success: true, data: users });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: "Lỗi server khi lấy danh sách user!" });
+  }
+};
 
-export { loginUser, registerUser, checkEmail, sendResetLink, resetPassword, getUser, updateProfile, changePassword };
+// ADMIN: Cập nhật trạng thái (Khóa / Mở khóa)
+const updateUserStatus = async (req, res) => {
+  try {
+    const { userId, isBlocked } = req.body;
+
+    const user = await userModel.findByIdAndUpdate(
+        userId, 
+        { isBlocked: isBlocked }, 
+        { new: true } // Trả về dữ liệu mới sau khi update
+    );
+
+    if (!user) {
+        return res.json({ success: false, message: "Không tìm thấy User" });
+    }
+
+    res.json({ 
+        success: true, 
+        message: isBlocked ? "Đã khóa tài khoản thành công!" : "Đã mở khóa tài khoản!" 
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: "Lỗi server!" });
+  }
+};
+
+// 1. ADMIN: Thêm người dùng mới
+const addUser = async (req, res) => {
+  try {
+    const { name, email, password, phone, role } = req.body;
+
+    // Kiểm tra tồn tại
+    const exists = await userModel.findOne({ email });
+    if (exists) {
+      return res.json({ success: false, message: "Email đã tồn tại!" });
+    }
+
+    // Hash mật khẩu
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const newUser = new userModel({
+      name,
+      email,
+      password: hashedPassword,
+      phone,
+      role: role || "user", // Mặc định là user nếu không chọn
+      isVerified: true, // Admin tạo thì mặc định xác thực luôn
+    });
+
+    await newUser.save();
+    res.json({ success: true, message: "Thêm người dùng thành công!" });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: "Lỗi server!" });
+  }
+};
+
+// 2. ADMIN: Sửa thông tin người dùng
+const editUser = async (req, res) => {
+  try {
+    const { userId, name, phone, role } = req.body;
+
+    await userModel.findByIdAndUpdate(userId, {
+        name,
+        phone,
+        role
+    });
+
+    res.json({ success: true, message: "Cập nhật thành công!" });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: "Lỗi server!" });
+  }
+};
+
+// 3. ADMIN: Xóa người dùng
+const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await userModel.findByIdAndDelete(id);
+    res.json({ success: true, message: "Đã xóa người dùng!" });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: "Lỗi server!" });
+  }
+};
+
+
+export { loginUser, registerUser, checkEmail, sendResetLink, resetPassword, getUser, updateProfile, changePassword, listUsers, updateUserStatus, addUser, editUser, deleteUser };

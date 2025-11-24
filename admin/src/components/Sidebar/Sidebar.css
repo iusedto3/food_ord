@@ -1,12 +1,11 @@
-.sidebar{
+.sidebar {
     width: 18%;
     min-height: 100vh;
-    border: 1.5px solid #a9a9a9;
-    border-top: 0;
-    font-size: max(1vw,10px);
+    border-right: 1.5px solid #a9a9a9;
+    font-size: max(1vw, 10px);
 }
 
-.sidebar-options{
+.sidebar-options {
     padding-top: 50px;
     padding-left: 20%;
     display: flex;
@@ -14,7 +13,7 @@
     gap: 20px;
 }
 
-.sidebar-option{
+.sidebar-option {
     display: flex;
     align-items: center;
     gap: 12px;
@@ -23,15 +22,48 @@
     padding: 8px 10px;
     border-radius: 3px 0px 0px 3px;
     cursor: pointer;
+    text-decoration: none;
+    /* Bỏ gạch chân link */
+    color: #222;
+    /* Màu chữ mặc định */
+    transition: 0.3s;
 }
 
-.sidebar-option:active{
+/* --- Style cho Icon mới --- */
+.sidebar-icon {
+    font-size: 22px;
+    /* Kích thước icon */
+    min-width: 22px;
+    /* Đảm bảo icon không bị bóp méo */
+}
+
+/* Trạng thái Active (Đang chọn) */
+.sidebar-option.active {
     background-color: #fff0ed;
     border-color: tomato;
+    color: tomato;
+    /* Chữ màu đỏ */
 }
-@media (max-width:900px){
-    .sidebar-option p{
-        display: none;
 
+/* Khi active thì icon cũng màu đỏ */
+.sidebar-option.active .sidebar-icon {
+    color: tomato;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .sidebar-option p {
+        display: none;
+        /* Ẩn chữ trên màn hình nhỏ */
+    }
+
+    .sidebar-options {
+        padding-left: 0;
+        align-items: center;
+    }
+
+    .sidebar-option {
+        justify-content: center;
+        padding: 10px;
     }
 }

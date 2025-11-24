@@ -59,3 +59,113 @@
 .phone-box input {
     border-radius: 0 8px 8px 0;
 }
+
+/* Style chung cho Card */
+.checkout-card {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.card-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: #333;
+}
+
+/* Style cho Form Address */
+.address-form-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.form-group {
+    flex: 1 1 30%;
+    /* Mỗi ô chiếm khoảng 30% */
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group.full-width {
+    flex: 1 1 100%;
+    /* Ô full dòng */
+}
+
+.form-group label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+}
+
+.form-group input,
+.form-group select {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: #d32f2f;
+    outline: none;
+}
+
+/* Style cho Payment List */
+.payment-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.payment-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.payment-item:hover {
+    background: #f9f9f9;
+}
+
+.payment-item.selected {
+    border-color: #d32f2f;
+    background: #fff5f5;
+}
+
+.payment-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
+
+.payment-icon-box {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border-radius: 4px;
+    border: 1px solid #eee;
+}
+
+.payment-label {
+    font-weight: 500;
+}
+
+input[type="radio"] {
+    accent-color: #d32f2f;
+    transform: scale(1.2);
+}

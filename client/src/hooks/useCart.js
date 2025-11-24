@@ -166,15 +166,21 @@ const useCart = (url, token) => {
 
   // ========== CLEAR ==========
   const clearCart = () => {
+    console.log("🧹 Đang dọn dẹp giỏ hàng..."); // Log để kiểm tra
     setCartItems([]);
     localStorage.removeItem("guestCart");
   };
 
-  // ========== TOTAL ==========
+  // ========== TOTAL (Đã sửa lỗi logic) ==========
   const getTotalCartAmount = () => {
-    return cartItems.reduce((sum, item) => sum + (item.totalPrice || 0), 0);
+    return cartItems.reduce((sum, item) => {
+      // 1. Ưu tiên dùng totalPrice (giá đã bao gồm topping/size nếu có)
+      // 2. Nếu totalPrice lỗi/bằng 0, fallback về công thức: giá gốc * số lượng
+      const itemTotal = item.totalPrice ? item.totalPrice : ((item.price || 0) * (item.quantity || 1));
+      
+      return sum + itemTotal;
+    }, 0);
   };
-
   return {
     cartItems,
     setCartItems,

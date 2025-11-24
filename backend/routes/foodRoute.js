@@ -8,6 +8,7 @@ import {
   updateFood,
   listCategories,
   getFoodByCategory,
+  getFoodById
 } from "../controllers/foodController.js";
 
 const foodRouter = express.Router();
@@ -44,5 +45,8 @@ foodRouter.get("/categories", listCategories);
 
 // Lấy món theo danh mục
 foodRouter.get("/category/:name", getFoodByCategory);
+
+// Lấy món theo ID
+foodRouter.get("/detail/:id", getFoodById);
 
 export default foodRouter;

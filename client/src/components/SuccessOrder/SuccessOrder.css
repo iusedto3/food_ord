@@ -233,3 +233,17 @@
     font-size: 14px;
     color: #888;
 }
+
+/* ... các code cũ giữ nguyên ... */
+
+.item-sub {
+    font-size: 14px;
+    color: #888;
+}
+
+/* 👇 THÊM MỚI: Style cho dòng giảm giá */
+.summary-row.discount {
+    color: #2e7d32;
+    /* Màu xanh lá đậm */
+    font-weight: 600;
+}

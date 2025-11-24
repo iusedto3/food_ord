@@ -7,7 +7,7 @@ const useFood = (url) => {
 
   const fetchFoodList = async () => {
     try {
-      const res = await axios.get(`${url}/api/food/list`);
+      const res = await axios.get(`${url}/api/food/list?limit=100`);
       if (res.data.success && Array.isArray(res.data.data)) {
         setFoodList(res.data.data);
       }

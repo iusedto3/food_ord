@@ -12,6 +12,7 @@ const CheckoutButton = () => {
   return (
     <button
       className={`checkout-btn ${isDisabled ? "disabled" : ""}`}
+      // Chuyển hướng đến trang đặt hàng (InfoPayment)
       onClick={() => !isDisabled && navigate("/checkout")}
       disabled={isDisabled}
     >
