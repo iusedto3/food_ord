@@ -1,54 +1,30 @@
-// CartSummary.jsx
-import React, { useContext, useState } from "react";
+import React from "react";
 import "./CartSummary.css";
-import { StoreContext } from "../../../contexts/StoreContext";
 
-const CartSummary = () => {
-  const {
-    cartItems,
-    discountAmount,
-    appliedVoucher,
-    applyVoucher,
-    getTotalCartAmount,
-  } = useContext(StoreContext);
-
-  const [voucherCode, setVoucherCode] = useState("");
-
-  const subtotal = Number(getTotalCartAmount()) || 0;
+// Component này bây giờ CHỈ NHẬN PROPS để hiển thị.
+// Không tự tính toán, không tự gọi Context để tránh sai lệch.
+const CartSummary = ({ subtotal, discount }) => {
   const delivery = 15000;
-  const discount = Number(discountAmount) || 0;
-  const totalPay = subtotal - discount + delivery;
 
-  const handleApply = async () => {
-    if (!voucherCode.trim()) return;
-    await applyVoucher(voucherCode.trim());
-  };
+  // Đảm bảo tổng không bị âm
+  const totalPay = Math.max(0, subtotal - discount) + delivery;
 
   return (
     <div className="cart-box summary-box">
       <h3 className="box-title">Tóm tắt đơn hàng</h3>
 
       <div className="summary-row">
-        <span>Tổng phụ</span>
+        <span>Tạm tính</span>
+        {/* Hiển thị số tiền được truyền từ PageCart -> Sidebar -> Summary */}
         <span>{subtotal.toLocaleString()}đ</span>
       </div>
 
-      <div className="summary-row voucher-row">
-        <input
-          className="voucher-input"
-          type="text"
-          placeholder="Nhập mã giảm giá..."
-          value={voucherCode}
-          onChange={(e) => setVoucherCode(e.target.value)}
-        />
-        <button className="voucher-btn" onClick={handleApply}>
-          Áp dụng
-        </button>
-      </div>
-
       {discount > 0 && (
-        <div className="summary-row discount-row">
-          <span>Giảm giá ({appliedVoucher?.code})</span>
+        <div
+          className="summary-row discount-row"
+          style={{ color: "#276749", fontWeight: "bold" }}
+        >
+          <span>Voucher giảm giá</span>
           <span>-{discount.toLocaleString()}đ</span>
         </div>
       )}

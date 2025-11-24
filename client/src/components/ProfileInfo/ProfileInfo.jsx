@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { StoreContext } from '../../contexts/StoreContext';
 import './ProfileInfo.css';
+import ChangePasswordForm from '../ChangePasswordForm/ChangePasswordForm';
 
 const ProfileInfo = () => {
   const { url, token } = useContext(StoreContext);
@@ -10,6 +11,8 @@ const ProfileInfo = () => {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [showChangePasswordForm, setShowChangePasswordForm] = useState(false);
+
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -66,8 +69,7 @@ const ProfileInfo = () => {
   };
 
   const handleChangePassword = () => {
-    // TODO: Implement password change form/modal
-    alert('Chức năng đổi mật khẩu sẽ được phát triển sau.');
+    setShowChangePasswordForm(true);
   };
 
   if (loading) {
@@ -80,6 +82,9 @@ const ProfileInfo = () => {
 
   return (
     <div className="profile-info-container">
+      {showChangePasswordForm && (
+        <ChangePasswordForm onClose={() => setShowChangePasswordForm(false)} />
+      )}
       <h2>Thông tin cá nhân</h2>
       <div className="profile-card">
         {message && <p className="success-message">{message}</p>}

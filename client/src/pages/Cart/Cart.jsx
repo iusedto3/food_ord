@@ -3,16 +3,23 @@ import useCart from "../../hooks/useCart";
 import CartItems from "../../components/CartItems/CartItems";
 import CartSuggestions from "../../components/CartSuggestions/CartSuggestions";
 import CartSidebar from "../../components/CartSideBar/CartSidebar";
-import CheckoutButton from "../../components/CartSideBar/CheckoutButton/CheckoutButton";
-import CheckoutProgress from "../../components/CheckoutProgress/CheckoutProgress";
-import { FiArrowLeft } from "react-icons/fi"; // Import the icon
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+
+import { FiArrowLeft } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
+import { useContext } from "react";
+import { StoreContext } from "../../contexts/StoreContext";
 import "./Cart.css";
+// import CartVoucher from "../../components/CartVoucher/CartVoucher"; // ⚠️ Đã chuyển vào trong CartSidebar nên KHÔNG import ở đây nữa
 
 const PageCart = () => {
-  const { getTotalCartAmount } = useCart();
-  const subtotal = getTotalCartAmount(); // tổng tiền giỏ hàng (chưa giảm)
-  const navigate = useNavigate(); // Initialize useNavigate
+  // 🟢 FIX LỖI Ở ĐÂY:
+  // Phải lấy thêm cartItems, foodList để component tự động re-render khi dữ liệu thay đổi
+  const { getTotalCartAmount, cartItems } = useContext(StoreContext);
+
+  const navigate = useNavigate();
+
+  // Khi cartItems hoặc foodList thay đổi, dòng này sẽ chạy lại => Giá cập nhật ngay lập tức
+  const subtotal = getTotalCartAmount();
 
   return (
     <>
@@ -22,7 +29,7 @@ const PageCart = () => {
           Quay lại
         </button>
       </div>
-      <CheckoutProgress step={1} />
+
       <div className="cart-wrapper">
         {/* LEFT – 65% */}
         <div className="cart-left">
@@ -32,8 +39,8 @@ const PageCart = () => {
 
         {/* RIGHT – SIDEBAR 35% */}
         <div className="cart-right">
+          {/* Truyền subtotal mới nhất xuống Sidebar */}
           <CartSidebar cartTotal={subtotal} />
-          <CheckoutButton />
         </div>
       </div>
     </>

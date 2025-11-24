@@ -9,6 +9,7 @@ import orderRouter from './routes/orderRoute.js';
 import promotionRouter from './routes/promotionRoute.js';
 import adminRoute from "./routes/adminRoute.js";
 import addressRoute from "./routes/addressRoute.js";
+import paymentRouter from './routes/paymentRoute.js';
 
 
 //app config
@@ -21,6 +22,8 @@ app.use(cors());
 
 //db connection
 connectDB();
+
+app.use("/api/payment", paymentRouter);
 
 //api endpoints
 app.use("/api/food",foodRouter);

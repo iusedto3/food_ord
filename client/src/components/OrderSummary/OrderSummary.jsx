@@ -1,65 +1,85 @@
-import React, { useContext } from "react";
-import "./OrderSummary.css";
+import React, { useContext, useState } from "react";
 import { StoreContext } from "../../contexts/StoreContext";
-import { formatVND } from "../../utils/format";
+import { FiChevronRight, FiInfo } from "react-icons/fi";
+import "./OrderSummary.css";
 
-const OrderSummary = ({ voucher }) => {
-  const { cartItems, getTotalCartAmount } = useContext(StoreContext);
+const OrderSummary = ({ onPlaceOrder, loading }) => {
+  const { cartItems, getTotalCartAmount, voucher } = useContext(StoreContext);
+  const [agreed, setAgreed] = useState(true);
+
   const subtotal = getTotalCartAmount();
-  const shippingFee = subtotal > 0 ? 15000 : 0; // Phí ship ví dụ
-  const discount = voucher?.discountAmount || 0;
-  const total = subtotal + shippingFee - discount;
+
+  // 🟢 CẬP NHẬT 1: Logic phí giao hàng
+  // Nếu giỏ hàng có món thì phí là 15.000đ, nếu rỗng thì 0đ
+  const deliveryFee = subtotal === 0 ? 0 : 15000;
+
+  const discount = voucher ? Number(voucher.discount) : 0;
+
+  // Tính tổng: (Tổng tiền + Ship - Voucher), không được âm
+  const total = Math.max(0, subtotal + deliveryFee - discount);
 
   return (
-    <div className="order-summary">
-      <h2 className="summary-title">Tóm tắt đơn hàng</h2>
-      
-      <div className="summary-items">
-        {cartItems.length > 0 ? (
-          cartItems.map((item, index) => (
-            <div key={`${item._id}-${index}`} className="summary-item">
-              <img src={`http://localhost:4000/images/${item.image}`} alt={item.name} className="summary-item-image" />
-              <div className="summary-item-details">
-                <span className="summary-item-name">{item.name}</span>
-                {item.size && <div className="summary-item-sub">Kích thước: {item.size}</div>}
-                {item.crust && <div className="summary-item-sub">Đế bánh: {item.crust.label}</div>}
-                {item.toppings?.length > 0 && (
-                  <div className="summary-item-sub">
-                    Topping: {item.toppings.map((t) => t.label).join(", ")}
-                  </div>
-                )}
-                {item.note && <div className="summary-item-sub">Ghi chú: {item.note}</div>}
-                <span className="summary-item-quantity">SL: {item.quantity}</span>
-              </div>
-              <span className="summary-item-price">{formatVND(item.price * item.quantity)}</span>
-            </div>
-          ))
-        ) : (
-          <p>Giỏ hàng của bạn đang trống.</p>
-        )}
-      </div>
+    <>
+      {/* Khối Tóm tắt Giỏ hàng */}
+      <div className="summary-card-box">
+        <div className="summary-header">
+          <h3>Giỏ hàng của tôi</h3>
+          <FiChevronRight />
+        </div>
+        <div className="summary-subtitle">
+          Có {cartItems.length} sản phẩm trong giỏ hàng
+        </div>
 
-      <div className="summary-total">
-        <div className="summary-total-row">
+        <div className="summary-row">
           <span>Tạm tính</span>
-          <span>{formatVND(subtotal)}</span>
+          <strong>{subtotal.toLocaleString()} ₫</strong>
         </div>
-        <div className="summary-total-row">
-          <span>Phí giao hàng</span>
-          <span>{formatVND(shippingFee)}</span>
-        </div>
+
+        {/* 🔴 ĐÃ XÓA: Dòng "Giảm giá thành viên" theo yêu cầu */}
+
+        {/* Dòng Voucher (chỉ hiện khi có áp dụng mã) */}
         {discount > 0 && (
-          <div className="summary-total-row discount-row">
-            <span>Giảm giá</span>
-            <span>- {formatVND(discount)}</span>
+          <div className="summary-row" style={{ color: "#2e7d32" }}>
+            <span>Voucher giảm giá</span>
+            <strong>-{discount.toLocaleString()} ₫</strong>
           </div>
         )}
-        <div className="summary-total-row total-row">
-          <span>Tổng cộng</span>
-          <span>{formatVND(total)}</span>
+
+        <div className="summary-row">
+          <span>
+            Phí giao hàng <FiInfo size={12} style={{ color: "#999" }} />
+          </span>
+          <strong>{deliveryFee.toLocaleString()} ₫</strong>
+        </div>
+
+        <div className="summary-row total">
+          <span className="total-label">Tổng cộng</span>
+          <span className="total-value">{total.toLocaleString()} ₫</span>
         </div>
       </div>
-    </div>
+
+      {/* Khối Điều khoản & Nút Đặt Hàng */}
+      <div className="checkout-agreement">
+        <label className="agreement-checkbox">
+          <input
+            type="checkbox"
+            checked={agreed}
+            onChange={(e) => setAgreed(e.target.checked)}
+          />
+          <span>
+            Tôi đồng ý với <u>các điều khoản và điều kiện</u>
+          </span>
+        </label>
+
+        <button
+          className="btn-place-order-final"
+          disabled={!agreed || loading || subtotal === 0} // Disable nếu giỏ hàng rỗng
+          onClick={onPlaceOrder}
+        >
+          {loading ? "Đang xử lý..." : "Đặt hàng"}
+        </button>
+      </div>
+    </>
   );
 };
 

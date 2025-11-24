@@ -15,6 +15,8 @@ import VerifyEmail from "./pages/VerifyEmail/VerifyEmail";
 import MyProfile from "./pages/MyProfile/MyProfile";
 import ProfileInfo from "./components/ProfileInfo/ProfileInfo";
 import OrderHistory from "./components/OrderHistory/OrderHistory";
+import AddressInfo from "./components/AddressInfo/AddressInfo";
+import Verify from "./pages/VerifyPayment/VerifyPayment";
 
 const App = () => {
   const [showLogin, setShowLogin] = useState(false);
@@ -33,10 +35,12 @@ const App = () => {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="/verify-email/:token" element={<VerifyEmail />} />
+          <Route path="/verify" element={<Verify />} />
           <Route path="/myprofile" element={<MyProfile />}>
             <Route path="" element={<Navigate to="info" replace />} />
             <Route path="info" element={<ProfileInfo />} />
             <Route path="orders" element={<OrderHistory />} />
+            <Route path="address" element={<AddressInfo />} />
           </Route>
         </Routes>
       </div>
@@ -46,4 +50,3 @@ const App = () => {
 };
 
 export default App;
-
