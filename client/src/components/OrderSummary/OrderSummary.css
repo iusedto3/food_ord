@@ -117,4 +117,103 @@
   .summary-total-row.total-row span:last-child {
     color: #000;
   }
+
+    .summary-card-box {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+  
+    .summary-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 15px;
+      cursor: pointer;
+    }
+  
+    .summary-header h3 {
+      font-size: 16px;
+      margin: 0;
+      font-weight: 700;
+    }
+  
+    .summary-subtitle {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 15px;
+    }
+  
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 14px;
+      color: #333;
+    }
+  
+    .summary-row.total {
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid #eee;
+      align-items: center;
+    }
+  
+    .total-label {
+      font-size: 16px;
+      font-weight: 600;
+    }
+  
+    .total-value {
+      font-size: 20px;
+      font-weight: 800;
+      color: #333;
+    }
+  
+    /* Phần Điều khoản & Nút */
+    .checkout-agreement {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 16px;
+    }
+  
+    .agreement-checkbox {
+      display: flex;
+      gap: 8px;
+      font-size: 13px;
+      color: #d32f2f;
+      margin-bottom: 15px;
+      align-items: center;
+    }
+  
+    .agreement-checkbox a {
+      text-decoration: underline;
+      cursor: pointer;
+    }
+  
+    .btn-place-order-final {
+      width: 100%;
+      background-color: #d32f2f;
+      /* Đỏ Pizza Hut */
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      padding: 14px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+  
+    .btn-place-order-final:hover {
+      background-color: #b71c1c;
+    }
+  
+    .btn-place-order-final:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
    

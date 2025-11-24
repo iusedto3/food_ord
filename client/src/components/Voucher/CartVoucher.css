@@ -1,0 +1,184 @@
+/* Container chung */
+.voucher-box {
+    background: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    border: 1px solid #eee;
+    margin-bottom: 15px;
+    /* Cách phần Tóm tắt đơn hàng */
+}
+
+.voucher-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.box-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.voucher-action-text {
+    font-size: 13px;
+    color: #007bff;
+    cursor: pointer;
+}
+
+/* 1. Trạng thái Placeholder (Chưa chọn) */
+.voucher-placeholder {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: #f8f9fa;
+    border: 1px dashed #ccc;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.voucher-placeholder:hover {
+    background: #f1f1f1;
+    border-color: #aaa;
+}
+
+.voucher-placeholder .icon {
+    font-size: 18px;
+}
+
+.voucher-placeholder .text {
+    flex: 1;
+    font-size: 14px;
+    color: #555;
+}
+
+.voucher-placeholder .arrow {
+    font-size: 12px;
+    color: #999;
+}
+
+/* 2. Trạng thái Selected (Đã chọn) */
+.voucher-selected {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    background: #f0fff4;
+    /* Màu xanh lá nhạt */
+    border: 1px solid #c6f6d5;
+    border-radius: 6px;
+}
+
+.voucher-icon-wrapper {
+    font-size: 18px;
+}
+
+.voucher-info {
+    flex: 1;
+}
+
+.voucher-code {
+    font-weight: bold;
+    color: #276749;
+    font-size: 14px;
+    margin: 0;
+}
+
+.voucher-save {
+    font-size: 12px;
+    color: #2f855a;
+    margin: 2px 0 0 0;
+}
+
+.voucher-remove-btn {
+    background: transparent;
+    border: none;
+    color: #e53e3e;
+    font-size: 12px;
+    cursor: pointer;
+    font-weight: 500;
+    padding: 4px 8px;
+}
+
+.voucher-remove-btn:hover {
+    text-decoration: underline;
+}
+/* Card Container giống Pizza Hut */
+.voucher-card-box {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.voucher-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.voucher-card-header h3 {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0;
+    color: #333;
+}
+
+/* Nút mở Popup */
+.voucher-selector {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f9f9f9;
+    padding: 12px;
+    border: 1px dashed #ccc;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.voucher-selector:hover {
+    background: #f0f0f0;
+    border-color: #aaa;
+}
+
+.voucher-placeholder-text {
+    font-size: 14px;
+    color: #d32f2f;
+    /* Màu đỏ thương hiệu */
+    font-weight: 500;
+}
+
+/* Khi đã chọn Voucher */
+.voucher-applied {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff5f5;
+    border: 1px solid #ffcdd2;
+    padding: 10px;
+    border-radius: 6px;
+}
+
+.voucher-code-tag {
+    font-weight: bold;
+    color: #c62828;
+}
+
+.btn-remove-voucher {
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    font-size: 18px;
+}
+
+.btn-remove-voucher:hover {
+    color: #d32f2f;
+}

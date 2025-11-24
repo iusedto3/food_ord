@@ -1,111 +1,93 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { FiX, FiTrash2, FiPlus, FiImage } from "react-icons/fi"; // Import Icon
 import "./EditFoodModal.css";
 
 const API_URL = "http://localhost:4000/api/food";
+const IMG_URL = "http://localhost:4000/images"; // URL folder ảnh backend
 
 const EditFoodModal = ({ foodId, onClose, onUpdated }) => {
   const [loading, setLoading] = useState(true);
-  const [food, setFood] = useState(null);
 
-  // Local states cho form
+  // Form States
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
   const [imageFile, setImageFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(""); // Xem trước ảnh
 
   const [sizes, setSizes] = useState([]);
   const [options, setOptions] = useState([]);
-
-  // CRUST
   const [crustEnabled, setCrustEnabled] = useState(false);
   const [crustList, setCrustList] = useState([]);
 
-  // ---------------------------------------------------
-  // Load food data
-  // ---------------------------------------------------
+  // Load Data
   useEffect(() => {
     const fetchFood = async () => {
       try {
-        const res = await axios.get(`${API_URL}/list`);
-        const found = res.data.data.find((f) => f._id === foodId);
+        // Gọi API lấy chi tiết 1 món (đã tạo ở bước trước)
+        const res = await axios.get(`${API_URL}/detail/${foodId}`);
 
-        if (found) {
-          setFood(found);
+        if (res.data.success) {
+          // 👇 SỬA Ở ĐÂY: Lấy thẳng data, KHÔNG DÙNG .find() nữa
+          // Vì API trả về: { success: true, data: { _id: "...", name: "..." } }
+          const found = res.data.data;
 
+          // Set dữ liệu vào form
           setName(found.name);
           setPrice(found.price);
           setCategory(found.category);
           setDescription(found.description);
 
+          // Preview ảnh
+          // Kiểm tra nếu có ảnh thì nối URL, không thì để trống
+          if (found.image) {
+            setPreviewUrl(`${IMG_URL}/${found.image}`);
+          }
+
           setSizes(found.sizes || []);
           setOptions(found.options || []);
-
-          // crust
           setCrustEnabled(found?.crust?.enabled || false);
           setCrustList(found?.crust?.list || []);
+        } else {
+          alert("Không tìm thấy thông tin món ăn!");
+          onClose();
         }
-
         setLoading(false);
       } catch (err) {
-        console.error("Load food error:", err);
+        console.error(err);
+        setLoading(false);
       }
     };
 
-    fetchFood();
+    if (foodId) {
+      fetchFood();
+    }
   }, [foodId]);
 
-  if (!food || loading) return null;
-
-  // ---------------------------------------------------
-  // CRUD cho sizes
-  // ---------------------------------------------------
-  const addSize = () => {
-    setSizes([...sizes, { label: "", price: 0 }]);
-  };
-  const updateSize = (i, field, value) => {
-    const newSizes = [...sizes];
-    newSizes[i][field] = value;
-    setSizes(newSizes);
-  };
-  const removeSize = (i) => {
-    setSizes(sizes.filter((_, idx) => idx !== i));
+  // Handle Image Change
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImageFile(file);
+      setPreviewUrl(URL.createObjectURL(file)); // Tạo URL tạm để xem trước
+    }
   };
 
-  // ---------------------------------------------------
-  // CRUD cho toppings (options)
-  // ---------------------------------------------------
-  const addOption = () => {
-    setOptions([...options, { label: "", price: 0 }]);
+  // CRUD Handlers (Refactored for clean code)
+  const handleArrayChange = (setter, list, index, field, value) => {
+    const updated = [...list];
+    updated[index][field] = value;
+    setter(updated);
   };
-  const updateOption = (i, field, value) => {
-    const newOpts = [...options];
-    newOpts[i][field] = value;
-    setOptions(newOpts);
+  const handleArrayRemove = (setter, list, index) => {
+    setter(list.filter((_, i) => i !== index));
   };
-  const removeOption = (i) => {
-    setOptions(options.filter((_, idx) => idx !== i));
+  const handleArrayAdd = (setter, list) => {
+    setter([...list, { label: "", price: 0 }]);
   };
 
-  // ---------------------------------------------------
-  // CRUD cho crust
-  // ---------------------------------------------------
-  const addCrust = () => {
-    setCrustList([...crustList, { label: "", price: 0 }]);
-  };
-  const updateCrust = (i, field, value) => {
-    const newCrust = [...crustList];
-    newCrust[i][field] = value;
-    setCrustList(newCrust);
-  };
-  const removeCrust = (i) => {
-    setCrustList(crustList.filter((_, idx) => idx !== i));
-  };
-
-  // ---------------------------------------------------
-  // Submit update
-  // ---------------------------------------------------
   const handleSubmit = async () => {
     try {
       const formData = new FormData();
@@ -113,149 +95,280 @@ const EditFoodModal = ({ foodId, onClose, onUpdated }) => {
       formData.append("price", price);
       formData.append("category", category);
       formData.append("description", description);
-
       formData.append("sizes", JSON.stringify(sizes));
       formData.append("options", JSON.stringify(options));
-
-      // crust
       formData.append("crustEnabled", crustEnabled);
       formData.append("crustList", JSON.stringify(crustList));
-
-      if (imageFile) {
-        formData.append("image", imageFile);
-      }
+      if (imageFile) formData.append("image", imageFile);
 
       await axios.put(`${API_URL}/update/${foodId}`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      onUpdated(); // để ProductList reload
+      onUpdated();
       onClose();
     } catch (err) {
-      console.error("Update error:", err);
       alert("Cập nhật thất bại!");
     }
   };
 
+  if (loading) return null;
+
   return (
     <div className="edit-modal-overlay">
       <div className="edit-modal">
-        <h2>Edit Food</h2>
-
-        {/* NAME */}
-        <label>Name</label>
-        <input value={name} onChange={(e) => setName(e.target.value)} />
-
-        {/* PRICE */}
-        <label>Price</label>
-        <input
-          type="number"
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-        />
-
-        {/* CATEGORY */}
-        <label>Category</label>
-        <input value={category} onChange={(e) => setCategory(e.target.value)} />
-
-        {/* DESCRIPTION */}
-        <label>Description</label>
-        <textarea
-          rows={3}
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
-
-        {/* IMAGE */}
-        <label>Image</label>
-        <input type="file" onChange={(e) => setImageFile(e.target.files[0])} />
-
-        {/* SIZES ------------------------------------------------ */}
-        <div className="block">
-          <h3>Sizes</h3>
-          {sizes.map((s, i) => (
-            <div key={i} className="row">
-              <input
-                placeholder="Label"
-                value={s.label}
-                onChange={(e) => updateSize(i, "label", e.target.value)}
-              />
-              <input
-                placeholder="Price"
-                type="number"
-                value={s.price}
-                onChange={(e) => updateSize(i, "price", e.target.value)}
-              />
-              <button onClick={() => removeSize(i)}>X</button>
-            </div>
-          ))}
-          <button onClick={addSize}>+ Add Size</button>
+        {/* HEADER */}
+        <div className="modal-header">
+          <h2>Chỉnh sửa món ăn</h2>
+          <button className="close-icon-btn" onClick={onClose}>
+            <FiX />
+          </button>
         </div>
 
-        {/* OPTIONS / TOPPINGS ----------------------------------- */}
-        <div className="block">
-          <h3>Toppings / Options</h3>
-          {options.map((o, i) => (
-            <div key={i} className="row">
-              <input
-                placeholder="Label"
-                value={o.label}
-                onChange={(e) => updateOption(i, "label", e.target.value)}
-              />
-              <input
-                placeholder="Price"
-                type="number"
-                value={o.price}
-                onChange={(e) => updateOption(i, "price", e.target.value)}
-              />
-              <button onClick={() => removeOption(i)}>X</button>
+        {/* BODY (2 Cột) */}
+        <div className="modal-body">
+          {/* --- CỘT TRÁI: THÔNG TIN CƠ BẢN --- */}
+          <div className="form-column">
+            <div className="form-group">
+              <label>Tên món</label>
+              <input value={name} onChange={(e) => setName(e.target.value)} />
             </div>
-          ))}
-          <button onClick={addOption}>+ Add Option</button>
-        </div>
 
-        {/* CRUST ------------------------------------------------ */}
-        <div className="block">
-          <h3>
-            Crust
-            <input
-              type="checkbox"
-              checked={crustEnabled}
-              onChange={(e) => setCrustEnabled(e.target.checked)}
-              style={{ marginLeft: 10 }}
-            />
-          </h3>
+            <div
+              className="form-group"
+              style={{ display: "flex", gap: "15px" }}
+            >
+              <div style={{ flex: 1 }}>
+                <label>Giá gốc (VNĐ)</label>
+                <input
+                  type="number"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label>Danh mục</label>
+                <input
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                />
+              </div>
+            </div>
 
-          {crustEnabled && (
-            <>
-              {crustList.map((c, i) => (
-                <div className="row" key={i}>
+            <div className="form-group">
+              <label>Mô tả</label>
+              <textarea
+                rows={4}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+
+            {/* Toppings & Options */}
+            <div className="variant-block">
+              <div className="variant-header">
+                <h4>Topping (Tùy chọn)</h4>
+                <button
+                  className="btn-add-variant"
+                  onClick={() => handleArrayAdd(setOptions, options)}
+                >
+                  <FiPlus /> Thêm Topping
+                </button>
+              </div>
+              {options.map((o, i) => (
+                <div key={i} className="variant-row">
                   <input
-                    placeholder="Crust label"
-                    value={c.label}
-                    onChange={(e) => updateCrust(i, "label", e.target.value)}
+                    placeholder="Tên (vd: Phô mai)"
+                    value={o.label}
+                    onChange={(e) =>
+                      handleArrayChange(
+                        setOptions,
+                        options,
+                        i,
+                        "label",
+                        e.target.value
+                      )
+                    }
                   />
                   <input
-                    placeholder="Price"
                     type="number"
-                    value={c.price}
-                    onChange={(e) => updateCrust(i, "price", e.target.value)}
+                    placeholder="Giá thêm"
+                    value={o.price}
+                    onChange={(e) =>
+                      handleArrayChange(
+                        setOptions,
+                        options,
+                        i,
+                        "price",
+                        e.target.value
+                      )
+                    }
+                    style={{ width: "100px" }}
                   />
-                  <button onClick={() => removeCrust(i)}>X</button>
+                  <button
+                    className="btn-icon"
+                    onClick={() => handleArrayRemove(setOptions, options, i)}
+                  >
+                    <FiTrash2 />
+                  </button>
                 </div>
               ))}
-              <button onClick={addCrust}>+ Add Crust</button>
-            </>
-          )}
+            </div>
+          </div>
+
+          {/* --- CỘT PHẢI: ẢNH & BIẾN THỂ --- */}
+          <div className="form-column">
+            {/* Image Preview */}
+            <div className="form-group">
+              <label>Hình ảnh</label>
+              <div className="image-upload-box">
+                {previewUrl ? (
+                  <img src={previewUrl} alt="Preview" className="preview-img" />
+                ) : (
+                  <div className="preview-placeholder">
+                    <FiImage size={40} />
+                  </div>
+                )}
+                <input
+                  type="file"
+                  className="file-input"
+                  onChange={handleImageChange}
+                />
+              </div>
+            </div>
+
+            {/* Sizes */}
+            <div className="variant-block">
+              <div className="variant-header">
+                <h4>Kích cỡ (Size)</h4>
+                <button
+                  className="btn-add-variant"
+                  onClick={() => handleArrayAdd(setSizes, sizes)}
+                >
+                  <FiPlus /> Thêm Size
+                </button>
+              </div>
+              {sizes.map((s, i) => (
+                <div key={i} className="variant-row">
+                  <input
+                    placeholder="Tên (vd: Lớn)"
+                    value={s.label}
+                    onChange={(e) =>
+                      handleArrayChange(
+                        setSizes,
+                        sizes,
+                        i,
+                        "label",
+                        e.target.value
+                      )
+                    }
+                  />
+                  <input
+                    type="number"
+                    placeholder="Giá"
+                    value={s.price}
+                    onChange={(e) =>
+                      handleArrayChange(
+                        setSizes,
+                        sizes,
+                        i,
+                        "price",
+                        e.target.value
+                      )
+                    }
+                    style={{ width: "100px" }}
+                  />
+                  <button
+                    className="btn-icon"
+                    onClick={() => handleArrayRemove(setSizes, sizes, i)}
+                  >
+                    <FiTrash2 />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Crust */}
+            <div className="variant-block">
+              <div className="variant-header">
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    margin: 0,
+                    cursor: "pointer",
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={crustEnabled}
+                    onChange={(e) => setCrustEnabled(e.target.checked)}
+                  />
+                  <span>Đế bánh (Crust)</span>
+                </label>
+                {crustEnabled && (
+                  <button
+                    className="btn-add-variant"
+                    onClick={() => handleArrayAdd(setCrustList, crustList)}
+                  >
+                    <FiPlus /> Thêm Đế
+                  </button>
+                )}
+              </div>
+
+              {crustEnabled &&
+                crustList.map((c, i) => (
+                  <div key={i} className="variant-row">
+                    <input
+                      placeholder="Tên (vd: Đế mỏng)"
+                      value={c.label}
+                      onChange={(e) =>
+                        handleArrayChange(
+                          setCrustList,
+                          crustList,
+                          i,
+                          "label",
+                          e.target.value
+                        )
+                      }
+                    />
+                    <input
+                      type="number"
+                      placeholder="Giá"
+                      value={c.price}
+                      onChange={(e) =>
+                        handleArrayChange(
+                          setCrustList,
+                          crustList,
+                          i,
+                          "price",
+                          e.target.value
+                        )
+                      }
+                      style={{ width: "100px" }}
+                    />
+                    <button
+                      className="btn-icon"
+                      onClick={() =>
+                        handleArrayRemove(setCrustList, crustList, i)
+                      }
+                    >
+                      <FiTrash2 />
+                    </button>
+                  </div>
+                ))}
+            </div>
+          </div>
         </div>
 
-        {/* ACTION BUTTONS */}
-        <div className="action-row">
+        {/* FOOTER */}
+        <div className="modal-footer">
           <button className="btn-cancel" onClick={onClose}>
-            Cancel
+            Hủy bỏ
           </button>
           <button className="btn-save" onClick={handleSubmit}>
-            Save Changes
+            Lưu thay đổi
           </button>
         </div>
       </div>

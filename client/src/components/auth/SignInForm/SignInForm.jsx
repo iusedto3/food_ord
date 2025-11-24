@@ -5,7 +5,8 @@ import axios from "axios";
 
 const SignInForm = () => {
   const navigate = useNavigate();
-  const { url, setToken, mergeGuestCart } = useContext(StoreContext);
+  // 💡 Không cần lấy mergeGuestCart nữa, chỉ cần setToken là đủ
+  const { url, setToken } = useContext(StoreContext);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -13,6 +14,7 @@ const SignInForm = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setErrorMsg(""); // Reset lỗi cũ nếu có
 
     try {
       const res = await axios.post(`${url}/api/user/login`, {
@@ -21,24 +23,22 @@ const SignInForm = () => {
       });
 
       if (res.data.success) {
+        // 1. Lưu token vào localStorage (để chắc chắn)
         localStorage.setItem("token", res.data.token);
 
-        // Đợi token được set vào context
-        setToken(res.data.token);
+        // 2. Gọi setToken từ Context
+        // (Hàm này trong Context sẽ tự động Gộp giỏ hàng Guest -> Server, sau đó mới update State)
+        await setToken(res.data.token);
 
-        // Đợi React cập nhật token xong
-        setTimeout(async () => {
-          try {
-            await mergeGuestCart(); // merge lúc này mới có token đúng
-          } catch (error) {
-            console.log("Merge cart failed, nhưng không ảnh hưởng login");
-          }
-
-          navigate("/");
-        }, 200);
+        // 3. Chuyển hướng ngay lập tức, không cần setTimeout hack
+        navigate("/");
+      } else {
+        // Xử lý trường hợp backend trả về success: false (ví dụ: sai pass)
+        setErrorMsg(res.data.message || "Sai email hoặc mật khẩu");
       }
     } catch (err) {
-      setErrorMsg("Sai email hoặc mật khẩu");
+      console.error("Login error:", err);
+      setErrorMsg("Lỗi kết nối hoặc sai thông tin đăng nhập");
     }
   };
 
@@ -68,7 +68,9 @@ const SignInForm = () => {
         Quên mật khẩu?
       </p>
 
-      <button className="signin-btn">Đăng nhập</button>
+      <button className="signin-btn" type="submit">
+        Đăng nhập
+      </button>
 
       <p className="signin-switch">
         Bạn chưa có tài khoản?{" "}

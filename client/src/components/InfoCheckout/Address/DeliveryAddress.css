@@ -122,3 +122,124 @@
     cursor: pointer;
     font-weight: 600;
 }
+/* DeliveryAddress.css */
+
+/* --- KHỐI ĐỊA CHỈ ĐÃ LƯU (SAVED ADDRESSES) --- */
+.saved-address-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.address-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: #f9f9f9;
+    position: relative;
+}
+
+.address-card:hover {
+    background: #fff;
+    border-color: #aaa;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.address-card.selected {
+    border-color: #d32f2f;
+    background: #fff5f5;
+    box-shadow: 0 0 0 1px #d32f2f;
+    /* Tạo viền đôi nhẹ */
+}
+
+.address-card h4 {
+    font-size: 14px;
+    font-weight: 700;
+    margin: 0 0 4px 0;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.address-card p {
+    font-size: 13px;
+    color: #666;
+    margin: 0;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    /* Cắt dòng nếu quá dài */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.check-icon {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    color: #d32f2f;
+    font-size: 18px;
+}
+
+/* --- FORM NHẬP LIỆU --- */
+.new-address-toggle {
+    font-size: 14px;
+    color: #d32f2f;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 12px;
+    display: inline-block;
+}
+
+.new-address-toggle:hover {
+    text-decoration: underline;
+}
+
+/* Trạng thái Loading/Disabled cho Select */
+select:disabled {
+    background-color: #f0f0f0;
+    cursor: not-allowed;
+    color: #999;
+}
+/* Card header trong ô địa chỉ */
+.card-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.text-danger {
+    color: #d32f2f !important;
+}
+
+/* Thẻ "Địa chỉ khác" */
+.add-new-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #666;
+    border-style: dashed;
+}
+
+.add-new-card:hover {
+    border-color: #d32f2f;
+    color: #d32f2f;
+}
+
+/* Hiệu ứng Visual Feedback */
+.form-passive {
+    opacity: 0.8;
+    transition: 0.3s;
+}
+
+.form-passive:hover,
+.form-passive:focus-within {
+    opacity: 1;
+}

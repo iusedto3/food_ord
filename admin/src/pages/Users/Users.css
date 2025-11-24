@@ -1,0 +1,47 @@
+/* Kế thừa từ ProductList.css, chỉ thêm những cái mới */
+
+.user-avatar-placeholder {
+    width: 40px;
+    height: 40px;
+    background-color: #eee;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #888;
+    font-size: 20px;
+}
+
+.badge-role {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.badge-role.admin {
+    background-color: #333;
+    color: #fff;
+}
+
+.badge-role.user {
+    background-color: #e3f2fd;
+    color: #1971c2;
+}
+
+/* Nút Lock/Unlock */
+.btn-icon.lock:hover {
+    background-color: #fff5f5;
+    color: #e03131;
+    border-color: #ffc9c9;
+}
+
+.btn-icon.unlock {
+    color: #2f9e44;
+}
+
+.btn-icon.unlock:hover {
+    background-color: #ebfbee;
+    border-color: #b2f2bb;
+}

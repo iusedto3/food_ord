@@ -246,3 +246,23 @@ export const getFoodByCategory = async (req, res) => {
     });
   }
 };
+
+
+/* ---------------------------------------------
+   GET SINGLE FOOD BY ID (MỚI)
+--------------------------------------------- */
+export const getFoodById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const food = await foodModel.findById(id);
+    
+    if (!food) {
+      return res.json({ success: false, message: "Không tìm thấy món ăn" });
+    }
+
+    res.json({ success: true, data: food });
+  } catch (error) {
+    console.error("Get Food ID Error:", error);
+    res.status(500).json({ success: false, message: "Lỗi server" });
+  }
+};

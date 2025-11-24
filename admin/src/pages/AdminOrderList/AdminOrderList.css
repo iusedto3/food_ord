@@ -1,86 +1,333 @@
 .admin-orders {
     padding: 20px;
+    background-color: #f5f7fa;
+    min-height: 100vh;
+    width: 100%;
+        flex: 1;
+}
+
+/* Header & Search */
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.search-bar {
+    position: relative;
+    width: 300px;
+}
+
+.search-bar input {
+    width: 100%;
+    padding: 10px 10px 10px 35px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    outline: none;
+}
+
+.search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #888;
+}
+
+/* Status Tabs */
+.status-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 10px;
+    overflow-x: auto;
+}
+
+.tab-btn {
+    background: none;
+    border: none;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #666;
+    cursor: pointer;
+    border-radius: 20px;
+    transition: 0.2s;
+    white-space: nowrap;
+}
+
+.tab-btn:hover {
+    background-color: #eee;
+}
+
+.tab-btn.active {
+    background-color: #2e2e2e;
+    color: #fff;
+}
+
+.tab-count {
+    margin-left: 6px;
+    background: rgba(0, 0, 0, 0.1);
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 11px;
+}
+
+.tab-btn.active .tab-count {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Table */
+.table-responsive {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    overflow-x: auto;
 }
 
 .order-table {
     width: 100%;
     border-collapse: collapse;
-    background: white;
-    border-radius: 8px;
-    overflow: hidden;
+    font-size: 14px;
 }
 
-.order-table th,
-.order-table td {
-    padding: 12px;
-    border-bottom: 1px solid #eee;
+.order-table th {
+    background-color: #f9f9f9;
+    padding: 15px;
     text-align: left;
+    color: #555;
+    font-weight: 600;
+    border-bottom: 1px solid #eee;
 }
 
-.status-badge {
-    padding: 4px 8px;
-    border-radius: 6px;
-    color: white;
+.order-table td {
+    padding: 15px;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: middle;
+}
+
+/* Cells Styling */
+.customer-cell,
+.date-cell {
+    display: flex;
+    flex-direction: column;
+}
+
+.customer-cell small,
+.date-cell small {
+    color: #888;
     font-size: 12px;
 }
 
-.status-badge.preparing {
-    background: orange;
+.text-tomato {
+    color: #e4002b;
+    font-weight: 700;
 }
 
-.status-badge.delivering {
-    background: dodgerblue;
+.fw-bold {
+    font-weight: 600;
 }
 
-.status-badge.completed {
-    background: green;
+/* Voucher Badge */
+.voucher-badge {
+    background-color: #fff0f6;
+    color: #c02d76;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 12px;
+    border: 1px solid #fcc2d7;
 }
 
-.status-badge.canceled {
-    background: red;
+.no-voucher {
+    color: #ccc;
 }
 
-.detail-btn {
-    background: #ff9100;
-    border: none;
-    padding: 6px 10px;
-    color: white;
-    border-radius: 50%;
-    font-weight: bold;
+/* Payment Badge */
+.payment-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.payment-badge.cod {
+    background: #e3f2fd;
+    color: #1864ab;
+}
+
+.payment-badge.momo {
+    background: #fce4ec;
+    color: #880e4f;
+}
+
+.payment-badge.zalopay {
+    background: #e6fcff;
+    color: #0b7285;
+}
+
+/* Action Button */
+.btn-view {
+    border: 1px solid #ddd;
+    background: #fff;
+    padding: 6px 12px;
+    border-radius: 4px;
     cursor: pointer;
+    font-size: 13px;
+    transition: 0.2s;
 }
 
-.order-detail-modal {
-    width: 400px;
+.btn-view:hover {
+    border-color: #333;
+    background: #333;
+    color: #fff;
 }
 
-.food-list {
-    list-style: none;
-    padding: 0;
+.empty-row {
+    text-align: center;
+    padding: 40px;
+    color: #999;
 }
-
-.food-item {
+.pagination {
     display: flex;
-    justify-content: space-between;
-    padding: 8px 0;
-    border-bottom: 1px solid #eee;
-}
-.food-item {
-    display: flex;
-    gap: 12px;
-    padding: 10px;
-    border-bottom: 1px solid #eee;
+    justify-content: flex-end;
+    /* Căn phải */
+    align-items: center;
+    gap: 8px;
+    margin-top: 20px;
+    padding: 10px 0;
 }
 
-.food-img {
-    width: 70px;
-    height: 70px;
-    object-fit: cover;
+.page-btn,
+.page-number {
+    border: 1px solid #ddd;
+    background: #fff;
+    min-width: 36px;
+    height: 36px;
     border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    color: #555;
+    transition: 0.2s;
 }
 
-.food-info h4 {
-    margin: 0;
-    font-size: 16px;
+.page-btn:hover:not(:disabled),
+.page-number:hover {
+    border-color: #333;
+    background: #f8f9fa;
 }
 
+.page-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #f1f1f1;
+}
+
+.page-number.active {
+    background: #e4002b;
+    /* Màu đỏ thương hiệu */
+    color: #fff;
+    border-color: #e4002b;
+    font-weight: 600;
+}
+
+/* --- PRICE CELL STYLING (MỚI) --- */
+.price-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+}
+
+.price-original {
+    font-size: 13px;
+    color: #999;
+    text-decoration: line-through;
+    /* Gạch ngang giá cũ */
+}
+
+.price-final {
+    font-size: 15px;
+    font-weight: 700;
+    color: #e4002b;
+    /* Đỏ nổi bật */
+}
+
+.voucher-tag {
+    font-size: 11px;
+    color: #2e7d32;
+    /* Xanh lá */
+    background-color: #e8f5e9;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+    margin-top: 2px;
+    white-space: nowrap;
+}
+
+/* --- TABS STYLING (Cải thiện) --- */
+.status-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #eee;
+}
+
+.tab-btn {
+    padding: 8px 16px;
+    border-radius: 20px;
+    background: #f1f3f5;
+    border: none;
+    font-size: 14px;
+    font-weight: 500;
+    color: #555;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.tab-btn:hover {
+    background: #e9ecef;
+}
+
+.tab-btn.active {
+    background: #333;
+    color: white;
+}
+
+.tab-count {
+    background: rgba(0, 0, 0, 0.1);
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 10px;
+}
+
+.tab-btn.active .tab-count {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.text-end {
+    text-align: right !important;
+    white-space: nowrap;
+    /* Không xuống dòng để giữ bảng đẹp */
+}
+
+.text-muted {
+    color: #888;
+    font-size: 13px;
+}
+
+/* Tinh chỉnh lại padding để bảng không bị quá rộng */
+.order-table th,
+.order-table td {
+    padding: 12px 10px;
+}

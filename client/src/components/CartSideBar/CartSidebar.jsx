@@ -1,29 +1,28 @@
 import React, { useContext } from "react";
 import CartSummary from "./Summary/CartSummary";
-import CartVoucher from "./Voucher/CartVoucher";
-import CartUtensils from "./Utensils/CartUtensils";
+import CartVoucher from "../Voucher/CartVoucher";
 import CheckoutButton from "./CheckoutButton/CheckoutButton";
 import { StoreContext } from "../../contexts/StoreContext";
-
 import "./CartSidebar.css";
 
 const CartSidebar = ({ cartTotal }) => {
-  const { voucher, setVoucher } = useContext(StoreContext);
+  const { voucher } = useContext(StoreContext);
 
-  const handleApplyVoucher = (v) => {
-    setVoucher(v); // { code, discountAmount, voucherInfo }
-  };
+  // Lấy giá trị giảm giá từ voucher (nếu không có thì bằng 0)
+  const discountAmount = voucher ? voucher.discount : 0;
+
+  console.log("Voucher trong Sidebar:", voucher); // Debug log
 
   return (
     <div className="cart-sidebar">
-      <CartVoucher onApplyVoucher={handleApplyVoucher} cartTotal={cartTotal} />
+      {/* 1. Phần chọn Voucher (Popup) */}
+      <CartVoucher />
 
-      <CartUtensils />
+      {/* 2. Phần tính tiền (Chỉ hiển thị) */}
+      <CartSummary subtotal={cartTotal} discount={discountAmount} />
 
-      <CartSummary
-        subtotal={cartTotal}
-        discount={voucher?.discountAmount || 0}
-      />
+      {/* 3. Nút thanh toán */}
+      <CheckoutButton />
     </div>
   );
 };

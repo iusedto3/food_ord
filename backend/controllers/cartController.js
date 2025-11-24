@@ -139,3 +139,49 @@ export const updateCartItem = async (req, res) => {
     res.json({ success: false, message: "Lỗi server!" });
   }
 };
+
+// ===================== SYNC CART (GỘP GIỎ HÀNG KHI LOGIN) =====================
+export const syncCart = async (req, res) => {
+  try {
+    const { userId, items } = req.body; // items là mảng giỏ hàng từ Guest
+
+    if (!items || items.length === 0) {
+      return res.json({ success: true, message: "Không có gì để đồng bộ" });
+    }
+
+    const user = await userModel.findById(userId);
+    if (!user) return res.json({ success: false, message: "User not found" });
+
+    if (!user.cart) user.cart = [];
+
+    // Duyệt qua từng món trong giỏ Guest để thêm vào DB
+    items.forEach((guestItem) => {
+      // Tìm xem món này đã có trong DB chưa (so sánh ID, size, toppings...)
+      const existingIndex = user.cart.findIndex(
+        (dbItem) =>
+          dbItem._id.toString() === guestItem._id && // Hoặc guestItem.itemId
+          dbItem.size === guestItem.size &&
+          JSON.stringify(dbItem.crust) === JSON.stringify(guestItem.crust) &&
+          JSON.stringify(dbItem.toppings) === JSON.stringify(guestItem.toppings)
+      );
+
+      if (existingIndex !== -1) {
+        // Nếu trùng món -> Cộng dồn số lượng
+        user.cart[existingIndex].quantity += guestItem.quantity;
+        // Cập nhật lại giá tổng nếu cần
+        user.cart[existingIndex].totalPrice += guestItem.totalPrice;
+      } else {
+        // Nếu chưa có -> Thêm mới
+        // Đảm bảo cấu trúc object giống Schema
+        user.cart.push(guestItem);
+      }
+    });
+
+    await user.save();
+
+    return res.json({ success: true, message: "Đồng bộ giỏ hàng thành công", cartData: user.cart });
+  } catch (err) {
+    console.error("Sync cart error:", err);
+    res.json({ success: false, message: "Lỗi đồng bộ giỏ hàng" });
+  }
+};

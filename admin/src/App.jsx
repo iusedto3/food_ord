@@ -9,7 +9,9 @@ import Promotion from "./pages/Promotion/Promotion";
 import { ToastContainer } from "react-toastify";
 import Login from "./pages/Auth/Login";
 import Register from "./pages/Auth/Register";
+import Users from "./pages/Users/Users";
 import AdminOrderList from "./pages/AdminOrderList/AdminOrderList";
+import Dashboard from "./pages/Dashboard/Dashboard";
 
 const App = () => {
   const url = "http://localhost:4000";
@@ -35,6 +37,8 @@ const App = () => {
           <Route path="/productlist" element={<List url={url} />} />
           <Route path="/promotion" element={<Promotion url={url} />} />
           <Route path="/orderlist" element={<AdminOrderList url={url} />} />
+          <Route path="/users" element={<Users url={url} />} />
+          <Route path="/dashboard" element={<Dashboard url={url} />} />
         </Routes>
       </div>
     </div>

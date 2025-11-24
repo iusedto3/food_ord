@@ -12,6 +12,11 @@ const ProfileSidebar = () => {
           </NavLink>
         </li>
         <li>
+          <NavLink to="/myprofile/address" className={({ isActive }) => isActive ? 'active' : ''}>
+            Sổ địa chỉ
+          </NavLink>
+        </li>
+        <li>
           <NavLink to="/myprofile/orders" className={({ isActive }) => isActive ? 'active' : ''}>
             Lịch sử đặt hàng
           </NavLink>

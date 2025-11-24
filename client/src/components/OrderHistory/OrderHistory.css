@@ -1,5 +1,8 @@
 .order-history-container {
     padding: 20px;
+    max-width: 1000px;
+    /* Giới hạn chiều rộng cho đẹp */
+    margin: 0 auto;
 }
 
 .order-history-container h2 {
@@ -16,7 +19,8 @@
 
 .order-history-item {
     display: grid;
-    grid-template-columns: 0.5fr 2fr 1fr 1fr 1fr;
+    /* 👇 Điều chỉnh lại tỷ lệ cột cho cân đối với Mã đơn */
+    grid-template-columns: 0.5fr 2fr 1fr 1.2fr 1fr;
     align-items: center;
     gap: 20px;
     padding: 15px;
@@ -35,9 +39,27 @@
     opacity: 0.7;
 }
 
-.order-items {
-    font-size: 14px;
+/* Style cho Mã đơn hàng */
+.order-info-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.order-id {
+    font-weight: 600;
+    color: #333;
+    font-size: 15px;
+}
+
+.order-id span {
     color: #555;
+    font-weight: 400;
+}
+
+.order-item-count {
+    font-size: 13px;
+    color: #888;
 }
 
 .order-amount {
@@ -50,41 +72,103 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    white-space: nowrap;
+    /* Tránh xuống dòng trạng thái */
 }
 
+/* ... (Giữ nguyên phần status-dot và màu sắc status) ... */
 .status-dot {
     width: 10px;
     height: 10px;
     border-radius: 50%;
 }
 
-.status-preparing { background-color: #ffc107; }
-.status-delivering { background-color: #17a2b8; }
-.status-completed { background-color: #28a745; }
-.status-canceled { background-color: #dc3545; }
+.status-preparing {
+    background-color: #ffc107;
+}
 
+.status-delivering {
+    background-color: #17a2b8;
+}
+
+.status-completed {
+    background-color: #28a745;
+}
+
+.status-canceled {
+    background-color: #dc3545;
+}
 
 .order-history-item button {
     border: none;
-    padding: 10px 15px;
+    padding: 10px 0;
+    /* Chỉnh lại padding */
     border-radius: 5px;
     background-color: #ffe1e1;
     cursor: pointer;
     color: #454545;
     font-weight: 500;
     transition: background-color 0.3s;
+    width: 100%;
+    /* Full chiều rộng cột */
+    text-align: center;
 }
 
 .order-history-item button:hover {
     background-color: #fdd4d4;
 }
 
+/* --- PAGINATION STYLES --- */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 30px;
+}
+
+.pagination button {
+    padding: 8px 14px;
+    border: 1px solid #ddd;
+    background-color: white;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: 0.2s;
+}
+
+.pagination button:hover:not(:disabled) {
+    background-color: #f0f0f0;
+    border-color: #ccc;
+}
+
+.pagination button.active {
+    background-color: tomato;
+    color: white;
+    border-color: tomato;
+}
+
+.pagination button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 @media (max-width: 900px) {
     .order-history-item {
-        grid-template-columns: 1fr;
-        gap: 10px;
+        grid-template-columns: 1fr 1fr;
+        /* Chia 2 cột trên mobile */
+        gap: 15px;
+        row-gap: 10px;
     }
+
+    .order-history-item img {
+        grid-row: 1 / 3;
+    }
+
+    /* Ảnh chiếm 2 hàng */
+
     .order-history-item button {
-        justify-self: start;
+        grid-column: 1 / -1;
+        /* Button full chiều ngang */
     }
 }
