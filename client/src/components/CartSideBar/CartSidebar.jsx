@@ -9,9 +9,7 @@ const CartSidebar = ({ cartTotal }) => {
   const { voucher } = useContext(StoreContext);
 
   // Lấy giá trị giảm giá từ voucher (nếu không có thì bằng 0)
-  const discountAmount = voucher ? voucher.discount : 0;
-
-  console.log("Voucher trong Sidebar:", voucher); // Debug log
+  const discountAmount = voucher ? voucher.discount || voucher.discoun || 0 : 0;
 
   return (
     <div className="cart-sidebar">

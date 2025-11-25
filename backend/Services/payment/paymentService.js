@@ -1,8 +1,7 @@
 import { createMomoPayment } from './momo.js';
 import { createStripePayment } from './stripe.js';
 import { createZaloPayPayment } from './zalopay.js';
-
-import { config } from '../../config/paymentConfig.js';
+import dotenv from 'dotenv';
 
 export const processPayment = async (method, orderId, amount) => {
     try {

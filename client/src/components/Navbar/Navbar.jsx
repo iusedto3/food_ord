@@ -4,6 +4,7 @@ import { BiCart, BiSolidUserDetail } from "react-icons/bi";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { StoreContext } from "../../contexts/StoreContext";
 import { assets } from "../../assets/assets";
+import { FiBox, FiLogOut, FiUser } from "react-icons/fi"; // Import icon
 
 const Navbar = ({ setShowLogin }) => {
   const { token, setToken, cartItems } = useContext(StoreContext);
@@ -12,12 +13,10 @@ const Navbar = ({ setShowLogin }) => {
   const dropdownRef = useRef(null);
   const location = useLocation();
 
-  // 🧩 Tính tổng số lượng món trong giỏ
   const totalItems = Object.values(cartItems || {}).reduce((sum, item) => {
     return sum + (item.quantity || 0);
   }, 0);
 
-  // 🔐 Đăng xuất
   const logout = () => {
     localStorage.removeItem("token");
     setToken("");
@@ -25,7 +24,6 @@ const Navbar = ({ setShowLogin }) => {
     navigate("/");
   };
 
-  // Đóng dropdown khi click bên ngoài
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -40,14 +38,12 @@ const Navbar = ({ setShowLogin }) => {
 
   return (
     <div className="navbar">
-      {/* 🏠 Logo giữa */}
       <div className="navbar-center">
         <Link to="/">
           <img src={assets.logo} alt="Logo" className="navbar-logo" />
         </Link>
       </div>
 
-      {/* 🛒 & 👤 Phải */}
       {showIcons && (
         <div className="navbar-right">
           <div className="navbar-cart">
@@ -66,6 +62,8 @@ const Navbar = ({ setShowLogin }) => {
               }`}
               onClick={() => setOpenDropdown(!openDropdown)}
             />
+
+            {/* 👇 DROPDOWN MENU (Đã sửa lỗi lồng thẻ li) */}
             {openDropdown && (
               <ul className={`dropdown ${openDropdown ? "open" : ""}`}>
                 {!token ? (
@@ -86,13 +84,14 @@ const Navbar = ({ setShowLogin }) => {
                         Đăng ký
                       </Link>
                     </li>
-                    <li>
-                      <Link
-                        to="/track-order"
-                        onClick={() => setOpenDropdown(false)}
-                      >
-                        Theo dõi đơn hàng
-                      </Link>
+                    {/* Link cho Guest tra cứu */}
+                    <li
+                      onClick={() => {
+                        navigate("/track-order");
+                        setOpenDropdown(false);
+                      }}
+                    >
+                      <p>Tra cứu đơn hàng</p>
                     </li>
                   </>
                 ) : (
@@ -102,18 +101,21 @@ const Navbar = ({ setShowLogin }) => {
                         to="/myprofile"
                         onClick={() => setOpenDropdown(false)}
                       >
-                        Thông tin cá nhân
+                        <FiUser /> Thông tin cá nhân
                       </Link>
                     </li>
-                    <li>
-                      <Link
-                        to="/track-order"
-                        onClick={() => setOpenDropdown(false)}
-                      >
-                        Theo dõi đơn hàng
-                      </Link>
+                    <li
+                      onClick={() => {
+                        navigate("/track-order");
+                        setOpenDropdown(false);
+                      }}
+                    >
+                      <FiBox /> Đơn hàng của tôi
                     </li>
-                    <li onClick={logout}>Đăng xuất</li>
+                    <hr />
+                    <li onClick={logout}>
+                      <FiLogOut /> Đăng xuất
+                    </li>
                   </>
                 )}
               </ul>

@@ -1,51 +1,53 @@
 import axios from 'axios';
 import crypto from 'crypto';
-import moment from 'moment'; // npm install moment
-import { config } from '../../config/paymentConfig.js';
+import moment from 'moment';
+// 👇 1. Import lại file config
+import { config } from '../../config/paymentConfig.js'; 
 
 export const createZaloPayPayment = async (orderId, amount) => {
     try {
+        // 👇 2. Lấy Key từ file config (thay vì ZALO_CONFIG cứng)
         const { app_id, key1, endpoint, callbackUrl, returnUrl } = config.zalopay;
 
         const embed_data = {
-            redirecturl: returnUrl // ZaloPay sẽ chuyển hướng về đây sau khi thanh toán
+            redirecturl: returnUrl // "http://localhost:5173/verify"
         };
 
-        const items = [{}]; // Có thể truyền danh sách món ăn vào đây nếu muốn
+        const items = []; 
         const transID = Math.floor(Math.random() * 1000000);
-        
-        // app_trans_id phải là duy nhất và theo định dạng YYMMDD_xxxxxx
         const app_trans_id = `${moment().format('YYMMDD')}_${transID}`;
 
         const order = {
-            app_id: app_id,
-            app_trans_id: app_trans_id, // Mã giao dịch phía ZaloPay (cần lưu lại vào orderModel nếu muốn đối soát)
+            app_id: parseInt(app_id),
+            app_trans_id: app_trans_id, 
             app_user: "user123",
-            app_time: Date.now(), // miliseconds
+            app_time: Date.now(),
             item: JSON.stringify(items),
             embed_data: JSON.stringify(embed_data),
-            amount: amount,
-            description: `Thanh toan don hang #${orderId}`,
+            amount: parseInt(amount),
+            description: `Thanh toan don hang #${transID}`,
             bank_code: "",
-            callback_url: callbackUrl
         };
 
-        // Tạo chữ ký HMAC SHA256
+        // Tạo MAC
         const data = `${order.app_id}|${order.app_trans_id}|${order.app_user}|${order.amount}|${order.app_time}|${order.embed_data}|${order.item}`;
         order.mac = crypto.createHmac('sha256', key1).update(data).digest('hex');
 
-        // Gọi API ZaloPay
-        const response = await axios.post(endpoint, null, { params: order });
+        console.log("⚡ Gửi ZaloPay Order:", order);
+
+        // 👇 3. Giữ nguyên dòng code đã fix được lỗi
+        const response = await axios.post(endpoint, order);
+
+        console.log("👉 ZaloPay Response:", response.data);
 
         if (response.data.return_code === 1) {
-            return response.data.order_url; // Link thanh toán
+            return response.data.order_url;
         } else {
-            console.log("ZaloPay Error:", response.data);
             return null;
         }
 
     } catch (error) {
-        console.error("ZaloPay Service Error:", error);
+        console.error("❌ ZaloPay Service Error:", error.message);
         return null;
     }
 };

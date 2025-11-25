@@ -1,6 +1,6 @@
 import express from 'express';
 import authMiddleware from '../middleware/auth.js';
-import { placeOrder, getOrderDetail, getAllOrders, updateOrderStatus, getUserOrders, getDashboardStats, verifyOrder } from '../controllers/orderController.js';
+import { placeOrder, getOrderDetail, getAllOrders, updateOrderStatus, getUserOrders, getDashboardStats, verifyOrder, trackOrder } from '../controllers/orderController.js';
 
 
 const orderRouter = express.Router();
@@ -17,5 +17,7 @@ orderRouter.get("/admin/orders", getAllOrders);
 orderRouter.put("/admin/update-status/:orderId", updateOrderStatus);
 
 orderRouter.post('/verify', verifyOrder);
+
+orderRouter.post('/track', trackOrder);
 
 export default orderRouter;

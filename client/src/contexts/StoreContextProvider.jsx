@@ -37,7 +37,7 @@ const StoreContextProvider = ({ children }) => {
 
   const { foodList, setFoodList, loading } = useFood(url);
 
-  // 1. Khởi tạo State từ LocalStorage (nếu có)
+  // 1. Khởi tạo Voucher từ LocalStorage (để F5 không mất)
   const [voucher, setVoucherState] = useState(() => {
     try {
       const saved = localStorage.getItem("voucher");
@@ -47,13 +47,13 @@ const StoreContextProvider = ({ children }) => {
     }
   });
 
-  // 2. Hàm setVoucher cải tiến: Vừa lưu State, vừa lưu LocalStorage
+  // 2. Hàm setVoucher cải tiến: Vừa lưu State, vừa lưu Storage
   const setVoucher = (data) => {
     setVoucherState(data);
     if (data) {
       localStorage.setItem("voucher", JSON.stringify(data));
     } else {
-      localStorage.removeItem("voucher"); // Nếu set null thì xóa khỏi storage
+      localStorage.removeItem("voucher");
     }
   };
 

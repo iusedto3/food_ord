@@ -14,16 +14,13 @@ const AdminOrderList = () => {
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
 
-  // State bộ lọc
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOrder, setSelectedOrder] = useState(null);
 
-  // State Phân trang
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // 1. Fetch Orders
   const fetchOrders = async () => {
     try {
       const res = await fetch("http://localhost:4000/api/order/admin/orders");
@@ -41,16 +38,11 @@ const AdminOrderList = () => {
     fetchOrders();
   }, []);
 
-  // 2. Logic Lọc & Reset trang
   useEffect(() => {
     let result = orders;
-
-    // Lọc theo Tab
     if (statusFilter !== "all") {
       result = result.filter((o) => o.status === statusFilter);
     }
-
-    // Lọc theo Tìm kiếm
     if (searchTerm) {
       const lowerTerm = searchTerm.toLowerCase();
       result = result.filter(
@@ -59,19 +51,16 @@ const AdminOrderList = () => {
           (o.customer?.phone && o.customer.phone.includes(lowerTerm))
       );
     }
-
     setFilteredOrders(result);
     setCurrentPage(1);
   }, [orders, statusFilter, searchTerm]);
 
-  // 3. Phân trang
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentOrders = filteredOrders.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-  // Tabs
   const statusTabs = [
     { id: "all", label: "Tất cả" },
     { id: "preparing", label: "Chờ xử lý" },
@@ -95,7 +84,6 @@ const AdminOrderList = () => {
         </div>
       </div>
 
-      {/* Tabs Trạng thái */}
       <div className="status-tabs">
         {statusTabs.map((tab) => {
           const count =
@@ -121,10 +109,11 @@ const AdminOrderList = () => {
             <tr>
               <th>Mã đơn</th>
               <th>Khách hàng</th>
-              {/* 👇 CỘT MỚI: Địa chỉ */}
               <th>Địa chỉ giao hàng</th>
-              {/* 👇 CỘT MỚI: Ngày đặt */}
               <th>Ngày đặt</th>
+
+              {/* 👇 ĐÃ THÊM LẠI CỘT THANH TOÁN */}
+              <th>Thanh toán</th>
 
               <th className="text-end">Tổng tiền</th>
               <th className="text-end">Giảm giá</th>
@@ -138,7 +127,6 @@ const AdminOrderList = () => {
           <tbody>
             {currentOrders.length > 0 ? (
               currentOrders.map((o) => {
-                // Tính toán
                 const subtotal = o.amount || 0;
                 const shipping = o.shippingFee || 15000;
                 const discount = o.discountAmount || 0;
@@ -157,7 +145,6 @@ const AdminOrderList = () => {
                       </div>
                     </td>
 
-                    {/* 👇 HIỂN THỊ ĐỊA CHỈ GIAO HÀNG */}
                     <td style={{ maxWidth: "200px" }}>
                       <div className="address-cell">
                         <span>{o.address?.street}</span>
@@ -172,7 +159,6 @@ const AdminOrderList = () => {
                       </div>
                     </td>
 
-                    {/* 👇 HIỂN THỊ NGÀY ĐẶT HÀNG */}
                     <td>
                       <div className="date-cell">
                         <span>
@@ -187,7 +173,48 @@ const AdminOrderList = () => {
                       </div>
                     </td>
 
-                    {/* Các cột tiền */}
+                    {/* 👇 HIỂN THỊ PHƯƠNG THỨC THANH TOÁN */}
+                    <td>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "4px",
+                        }}
+                      >
+                        <span className={`payment-badge ${o.paymentMethod}`}>
+                          {o.paymentMethod === "cod"
+                            ? "Tiền mặt"
+                            : o.paymentMethod.toUpperCase()}
+                        </span>
+                        {/* Cảnh báo nếu chưa thanh toán (trừ COD) */}
+                        {o.paymentMethod !== "cod" &&
+                          o.paymentStatus !== "paid" && (
+                            <small
+                              style={{
+                                color: "#d32f2f",
+                                fontSize: "11px",
+                                fontWeight: "600",
+                              }}
+                            >
+                              Chưa thanh toán
+                            </small>
+                          )}
+                        {/* Xác nhận nếu đã thanh toán */}
+                        {o.paymentStatus === "paid" && (
+                          <small
+                            style={{
+                              color: "#2e7d32",
+                              fontSize: "11px",
+                              fontWeight: "600",
+                            }}
+                          >
+                            Đã thanh toán
+                          </small>
+                        )}
+                      </div>
+                    </td>
+
                     <td className="text-end">
                       {(subtotal + shipping).toLocaleString()}đ
                     </td>
@@ -231,7 +258,7 @@ const AdminOrderList = () => {
               })
             ) : (
               <tr>
-                <td colSpan="9" className="empty-row">
+                <td colSpan="10" className="empty-row">
                   Không có đơn hàng nào.
                 </td>
               </tr>

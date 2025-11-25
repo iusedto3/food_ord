@@ -1,23 +1,29 @@
 import orderModel from "../models/orderModel.js";
 import userModel from "../models/userModel.js";
-import foodModel from "../models/foodModel.js"; // Đã thêm
+import foodModel from "../models/foodModel.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import jwt from "jsonwebtoken"; 
-// 👇 Import Service Thanh toán (Nếu bạn đã tạo file service, nếu chưa thì comment lại dòng này)
 import { processPayment } from "../Services/payment/paymentService.js";
 
 // ---------------------------
-// PLACE ORDER
+// 1. PLACE ORDER
 // ---------------------------
 export const placeOrder = async (req, res) => {
-  // Lấy dữ liệu từ req.body
   let { userId, address, customer, amount, paymentMethod, items, voucher } = req.body;
   let cartItems = [];
 
+  let calculatedAmount = 0;
+    cartItems.forEach(item => {
+        // Nếu item có totalPrice thì dùng, không thì tính tay
+        const itemPrice = item.totalPrice ? item.totalPrice : (item.price * item.quantity);
+        calculatedAmount += itemPrice;
+    });
+
+    // Gán ngược lại vào amount
+    amount = calculatedAmount;
+
   try {
-    // ---------------------------
-    // 0. THÔNG MINH: Tự lấy userId từ Token nếu Frontend gửi thiếu
-    // ---------------------------
+    // --- AUTH: Lấy userId từ Token nếu thiếu ---
     if (!userId && req.headers.authorization) {
       try {
         const token = req.headers.authorization.split(" ")[1];
@@ -25,19 +31,14 @@ export const placeOrder = async (req, res) => {
           const decoded = jwt.verify(token, process.env.JWT_SECRET);
           userId = decoded.id; 
         }
-      } catch (e) {
-        // Token lỗi hoặc hết hạn -> coi như Guest
-      }
+      } catch (e) {}
     }
 
-    // ---------------------------
-    // 1. Phân biệt USER và GUEST để lấy cartItems
-    // ---------------------------
+    // --- ITEMS: Xử lý giỏ hàng ---
     if (userId) {
       const user = await userModel.findById(userId);
       if (!user) return res.json({ success: false, msg: "User không tồn tại" });
-      
-      // Ưu tiên lấy từ DB, nếu DB rỗng thì lấy từ req.body (fallback)
+      // Ưu tiên lấy từ DB
       cartItems = (user.cartData && user.cartData.length > 0) ? user.cartData : (items || []);
     } else {
       cartItems = items;
@@ -47,22 +48,25 @@ export const placeOrder = async (req, res) => {
       return res.json({ success: false, msg: "Giỏ hàng trống" });
     }
 
-    // Xử lý Voucher
+    // --- CALCULATION: Tính tổng tiền chuẩn xác ---
     let discountAmount = 0;
     let voucherCode = "";
+    const shippingFee = 15000; // Phí ship
+
     if (voucher) {
         discountAmount = Number(voucher.discount) || 0;
         voucherCode = voucher.code || "";
     }
 
-    // Validation
+    // Tính lại tổng tiền cuối cùng để gửi sang cổng thanh toán
+    // amount: Là tổng tiền hàng (Subtotal)
+    const finalAmount = Math.max(0, amount + shippingFee - discountAmount);
+
     if (!address || !customer || !amount || !paymentMethod) {
       return res.json({ success: false, msg: "Thiếu dữ liệu order" });
     }
 
-    // ---------------------------
-    // 2. CHUẨN HÓA ITEMS & TÍNH TOÁN
-    // ---------------------------
+    // --- TẠO ORDER ---
     const itemsWithTotalPrice = cartItems.map((item) => {
       const itemObj = (item.toObject && typeof item.toObject === 'function') ? item.toObject() : item;
       const finalBasePrice = itemObj.basePrice !== undefined ? itemObj.basePrice : (itemObj.price || 0);
@@ -78,72 +82,54 @@ export const placeOrder = async (req, res) => {
       };
     });
 
-    // ---------------------------
-    // 3. TẠO ORDER (TRẠNG THÁI PENDING)
-    // ---------------------------
     const newOrder = new orderModel({
       orderId: generateOrderId(),
       userId: userId || undefined,
       items: itemsWithTotalPrice,  
-      amount,
+      amount, // Lưu giá gốc
       discountAmount,
       voucherCode,
-      shippingFee: 15000,
+      shippingFee,
       address,
       customer,
       paymentMethod,
-      paymentStatus: "pending", 
+      paymentStatus: "pending", // Mặc định là chờ
       status: "preparing",
       date: Date.now()
     });
 
     await newOrder.save();
 
-    // ---------------------------
-    // 4. XỬ LÝ THANH TOÁN ONLINE (MỚI)
-    // ---------------------------
+    // --- XỬ LÝ THANH TOÁN ONLINE ---
     if (paymentMethod !== 'cod') {
         try {
-            console.log(`🔄 Đang tạo link thanh toán ${paymentMethod}...`); // Log 1
-
-            // Gọi Service
-            const paymentUrl = await processPayment(paymentMethod, newOrder._id, amount);
+            // Gửi finalAmount (đã tính toán) sang Service
+            const paymentUrl = await processPayment(paymentMethod, newOrder._id, finalAmount);
             
-            console.log("✅ Link thanh toán:", paymentUrl); // Log 2
-
             if (paymentUrl) {
-                // Nếu có link thì trả về luôn
+                // Nếu là Online: CHƯA gửi mail, CHƯA xóa giỏ hàng (đợi verify)
                 return res.json({ 
                     success: true, 
                     message: "Redirect to Payment", 
                     orderId: newOrder._id,
                     paymentUrl 
                 });
-            } else {
-                // Nếu không tạo được link (ví dụ lỗi Stripe), throw lỗi để xuống catch
-                throw new Error("Không tạo được paymentUrl (kết quả null)");
             }
         } catch (err) {
-            // 👇 IN LỖI RA TERMINAL ĐỂ DEBUG
-            console.error("❌ LỖI THANH TOÁN ONLINE:", err);
-            
-            // Xóa đơn hàng lỗi để tránh rác DB
+            console.error("Lỗi tạo link thanh toán:", err);
+            // Nếu lỗi, xóa đơn hàng rác
             await orderModel.findByIdAndDelete(newOrder._id);
-            
-            return res.json({ 
-                success: false, 
-                message: "Lỗi tạo cổng thanh toán: " + err.message 
-            });
+            return res.json({ success: false, msg: "Lỗi cổng thanh toán" });
         }
     }
-    // ---------------------------
-    // 5. XỬ LÝ COD (MẶC ĐỊNH)
-    // ---------------------------
+
+    // --- XỬ LÝ COD (TIỀN MẶT) ---
+    // 1. Gửi mail ngay
     try { await sendEmail(newOrder); } catch (err) {}
 
-    // Clear giỏ hàng
+    // 2. Clear giỏ hàng ngay (QUAN TRỌNG)
     if (userId) {
-      await userModel.findByIdAndUpdate(userId, { cartData: [] });
+      await userModel.findByIdAndUpdate(userId, { cart: [] });
     }
 
     return res.json({
@@ -158,6 +144,45 @@ export const placeOrder = async (req, res) => {
   }
 };
 
+// ---------------------------
+// 2. VERIFY ORDER (Xác thực & Gửi mail Online)
+// ---------------------------
+export const verifyOrder = async (req, res) => {
+  const { orderId, success } = req.body;
+  try {
+    const query = {
+        $or: [ { _id: orderId.match(/^[0-9a-fA-F]{24}$/) ? orderId : null }, { orderId: orderId } ] 
+    };
+
+    if (success === "true" || success === true) {
+      const updatedOrder = await orderModel.findOneAndUpdate(
+        query, 
+        { paymentStatus: "paid" },
+        { new: true }
+      );
+      
+      if (!updatedOrder) return res.json({ success: false, message: "Không tìm thấy đơn hàng" });
+
+      // 👇 ONLINE: Gửi mail khi đã thanh toán thành công
+      try { await sendEmail(updatedOrder); } catch (err) {}
+
+      // 👇 ONLINE: Xóa giỏ hàng khi đã thanh toán thành công
+      if (updatedOrder.userId) {
+          await userModel.findByIdAndUpdate(updatedOrder.userId, { cart: [] });
+          console.log(`🧹 Đã dọn sạch giỏ hàng sau Verify: ${updatedOrder.userId}`);
+      }
+
+      res.json({ success: true, message: "Paid" });
+    } else {
+      // Nếu thất bại -> Xóa đơn nháp
+      await orderModel.findOneAndDelete(query);
+      res.json({ success: false, message: "Not Paid" });
+    }
+  } catch (error) {
+    console.log("Lỗi Verify:", error);
+    res.json({ success: false, message: "Error" });
+  }
+};
 // ... (Giữ nguyên các hàm generateOrderId, getOrderDetail, getUserOrders, getAllOrders, updateOrderStatus) ...
 const generateOrderId = () => {
   const date = new Date();
@@ -167,7 +192,6 @@ const generateOrderId = () => {
   const random = Math.floor(1000 + Math.random() * 9000);
   return `PH${yy}${mm}${dd}${random}`;
 };
-
 export const getOrderDetail = async (req, res) => {
   try {
     const { orderId } = req.params;
@@ -180,21 +204,18 @@ export const getOrderDetail = async (req, res) => {
     return res.json({ success: false, msg: "Lỗi server", error: err.message });
   }
 };
-
 export const getUserOrders = async (req, res) => {
   try {
     const orders = await orderModel.find({ userId: req.body.userId }).sort({ createdAt: -1 });
     res.json({ success: true, orders });
   } catch (error) { res.json({ success: false, message: "Lỗi server!" }); }
 };
-
 export const getAllOrders = async (req, res) => {
   try {
     const orders = await orderModel.find({}).sort({ createdAt: -1 });
     return res.json({ success: true, orders });
   } catch (err) { return res.json({ success: false, msg: "Lỗi server", error: err.message }); }
 };
-
 export const updateOrderStatus = async (req, res) => {
   try {
     const { orderId } = req.params;
@@ -204,8 +225,6 @@ export const updateOrderStatus = async (req, res) => {
     return res.json({ success: true, msg: "Cập nhật thành công", order: updated });
   } catch (err) { return res.json({ success: false, msg: "Lỗi cập nhật", error: err.message }); }
 };
-
-// ---------------------------
 // DASHBOARD STATS (ĐÃ CẬP NHẬT FILTER NGÀY)
 // ---------------------------
 export const getDashboardStats = async (req, res) => {
@@ -260,18 +279,33 @@ export const getDashboardStats = async (req, res) => {
   }
 };
 
-export const verifyOrder = async (req, res) => {
-    const { orderId, success } = req.body;
+export const trackOrder = async (req, res) => {
+    const { keyword } = req.body; 
+
+    if (!keyword) {
+        return res.json({ success: false, message: "Vui lòng nhập mã đơn hàng!" });
+    }
+
     try {
-        if (success === "true") {
-            await orderModel.findByIdAndUpdate(orderId, { paymentStatus: "paid" }); // Cập nhật đã thanh toán
-            res.json({ success: true, message: "Paid" });
-        } else {
-            await orderModel.findByIdAndDelete(orderId); // Nếu lỗi thì xóa đơn nháp đi
-            res.json({ success: false, message: "Not Paid" });
+        // Logic tìm kiếm:
+        // 1. Tìm theo orderId (Mã đơn tự tạo PH...)
+        // 2. Hoặc tìm theo _id (MongoID)
+        const query = {
+            $or: [
+                { orderId: keyword },
+                { _id: keyword.match(/^[0-9a-fA-F]{24}$/) ? keyword : null } 
+            ]
+        };
+
+        const orders = await orderModel.find(query);
+
+        if (!orders || orders.length === 0) {
+            return res.json({ success: false, message: "Không tìm thấy đơn hàng này." });
         }
+
+        res.json({ success: true, orders }); 
     } catch (error) {
         console.log(error);
-        res.json({ success: false, message: "Error" });
+        res.json({ success: false, message: "Lỗi server" });
     }
 }

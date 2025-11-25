@@ -16,7 +16,7 @@ import MyProfile from "./pages/MyProfile/MyProfile";
 import ProfileInfo from "./components/ProfileInfo/ProfileInfo";
 import OrderHistory from "./components/OrderHistory/OrderHistory";
 import AddressInfo from "./components/AddressInfo/AddressInfo";
-import Verify from "./pages/VerifyPayment/VerifyPayment";
+import Verify from "./pages/Verify/Verify";
 
 const App = () => {
   const [showLogin, setShowLogin] = useState(false);
@@ -42,6 +42,7 @@ const App = () => {
             <Route path="orders" element={<OrderHistory />} />
             <Route path="address" element={<AddressInfo />} />
           </Route>
+          <Route path="/track-order" element={<OrderHistory />} />
         </Routes>
       </div>
       <Footer />
