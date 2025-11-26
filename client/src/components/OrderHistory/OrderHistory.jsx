@@ -8,34 +8,38 @@ import "./OrderHistory.css";
 const OrderHistory = () => {
   const { url, token } = useContext(StoreContext);
   const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   // --- STATE PHÂN TRANG ---
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5; // Số đơn hàng mỗi trang
+  const itemsPerPage = 5;
 
   useEffect(() => {
     const fetchOrders = async () => {
       if (token) {
+        setLoading(true);
         try {
-          const response = await axios.get(`${url}/api/order/my-orders`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
+          const response = await axios.post(
+            `${url}/api/order/userorders`,
+            {},
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          // Lưu ý: Endpoint của bạn có thể là /userorders (POST) hoặc /my-orders (GET) tùy route bạn khai báo.
+          // Ở đây mình dùng logic fetch chuẩn dựa trên code controller cũ.
+
           if (response.data.success) {
-            // Đảo ngược mảng để đơn mới nhất lên đầu
-            setOrders(response.data.orders.reverse());
+            setOrders(response.data.orders); // Controller đã sort reverse rồi
           }
         } catch (error) {
           console.error("Lỗi khi tải lịch sử đơn hàng:", error);
         } finally {
           setLoading(false);
         }
-      } else {
-        setLoading(false);
       }
     };
-
     fetchOrders();
   }, [token, url]);
 
@@ -60,46 +64,63 @@ const OrderHistory = () => {
       <h2>Lịch sử đặt hàng</h2>
       <div className="order-history-list">
         {orders.length === 0 ? (
-          <p>Bạn chưa có đơn hàng nào.</p>
+          <div className="empty-order">
+            <p>Bạn chưa có đơn hàng nào.</p>
+            <button onClick={() => navigate("/")}>Đặt món ngay</button>
+          </div>
         ) : (
-          currentOrders.map((order) => (
-            <div key={order._id} className="order-history-item">
-              <img src={assets.parcel_icon} alt="parcel icon" />
+          currentOrders.map((order) => {
+            // 🟢 1. TÍNH TOÁN GIÁ TIỀN THỰC TẾ (QUAN TRỌNG)
+            const subtotal = order.amount || 0;
+            const shipping = order.shippingFee || 20000; // Mặc định 20k nếu DB cũ chưa có
+            const discount = order.discountAmount || 0;
 
-              {/* 👇 CẬP NHẬT: Hiện Mã đơn hàng thay vì list món */}
-              <div className="order-info-group">
-                <p className="order-id">
-                  Mã đơn: <span>#{order.orderId || order._id}</span>
+            // Công thức: Tạm tính + Ship - Voucher
+            const finalTotal = Math.max(0, subtotal + shipping - discount);
+
+            return (
+              <div key={order._id} className="order-history-item">
+                <img src={assets.parcel_icon} alt="parcel icon" />
+
+                <div className="order-info-group">
+                  <p className="order-id">
+                    Mã đơn: <span>#{order.orderId || order._id}</span>
+                  </p>
+                  <p className="order-item-count">
+                    Số lượng: {order.items.length} món
+                  </p>
+                </div>
+
+                {/* 🟢 2. HIỂN THỊ GIÁ FINAL TOTAL */}
+                <div className="order-price-group">
+                  <p className="order-amount">{finalTotal.toLocaleString()}đ</p>
+                  {/* (Optional) Nếu muốn hiện chi tiết giảm giá thì mở dòng dưới */}
+                  {/* {discount > 0 && <small style={{color:'green', fontSize:'12px'}}>Dis: -{discount.toLocaleString()}</small>} */}
+                </div>
+
+                <p className="order-status">
+                  <span className={`status-dot status-${order.status}`}></span>
+                  <b>
+                    {order.status === "preparing"
+                      ? "Đang chuẩn bị"
+                      : order.status === "delivering"
+                      ? "Đang giao"
+                      : order.status === "completed"
+                      ? "Hoàn thành"
+                      : "Đã hủy"}
+                  </b>
                 </p>
-                <p className="order-item-count">
-                  Số lượng: {order.items.length} món
-                </p>
+
+                <button onClick={() => navigate(`/success/${order._id}`)}>
+                  Theo dõi
+                </button>
               </div>
-
-              <p className="order-amount">{order.amount.toLocaleString()}đ</p>
-
-              <p className="order-status">
-                <span className={`status-dot status-${order.status}`}></span>
-                <b>
-                  {order.status === "preparing"
-                    ? "Đang chuẩn bị"
-                    : order.status === "delivering"
-                    ? "Đang giao"
-                    : order.status === "completed"
-                    ? "Hoàn thành"
-                    : "Đã hủy"}
-                </b>
-              </p>
-
-              <button onClick={() => navigate(`/success/${order._id}`)}>
-                Xem chi tiết
-              </button>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 
-      {/* 👇 CẬP NHẬT: Thanh Phân Trang */}
+      {/* Thanh Phân Trang */}
       {orders.length > itemsPerPage && (
         <div className="pagination">
           <button

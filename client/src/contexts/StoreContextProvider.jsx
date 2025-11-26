@@ -3,16 +3,13 @@ import { StoreContext } from "./StoreContext";
 import useAuth from "../hooks/useAuth";
 import useCart from "../hooks/useCart";
 import useFood from "../hooks/useFood";
-import axios from "axios"; // ✅ Nhớ cài axios hoặc đảm bảo đã import
+import axios from "axios";
 
 const StoreContextProvider = ({ children }) => {
   const url = "http://localhost:4000";
-  // const url = "https://your-deploy-url.com"; // Dùng khi deploy
   const backendUrl = url;
 
-  // -------------------------------------------------
   // 1. HOOKS
-  // -------------------------------------------------
   const { token, setToken, logout: authLogout } = useAuth();
 
   const {
@@ -22,22 +19,14 @@ const StoreContextProvider = ({ children }) => {
     updateCartItem,
     getTotalCartAmount,
     clearCart,
+    setCartItems,
+    loadCartData,
+    get,
   } = useCart(url, token);
-
-  const handleLogout = () => {
-    // Gọi hàm logout gốc (xóa token)
-    authLogout();
-
-    // Xóa voucher khỏi State và LocalStorage
-    setVoucher(null);
-
-    // (Tuỳ chọn) Xóa luôn giỏ hàng hiển thị để tránh rác
-    // clearCart();
-  };
 
   const { foodList, setFoodList, loading } = useFood(url);
 
-  // 1. Khởi tạo State từ LocalStorage (nếu có)
+  // 2. VOUCHER STATE
   const [voucher, setVoucherState] = useState(() => {
     try {
       const saved = localStorage.getItem("voucher");
@@ -47,73 +36,93 @@ const StoreContextProvider = ({ children }) => {
     }
   });
 
-  // 2. Hàm setVoucher cải tiến: Vừa lưu State, vừa lưu LocalStorage
   const setVoucher = (data) => {
     setVoucherState(data);
     if (data) {
       localStorage.setItem("voucher", JSON.stringify(data));
     } else {
-      localStorage.removeItem("voucher"); // Nếu set null thì xóa khỏi storage
+      localStorage.removeItem("voucher");
     }
   };
 
-  // -------------------------------------------------
-  // 2. XỬ LÝ LOGIN & MERGE CART (QUAN TRỌNG)
-  // -------------------------------------------------
-  // Hàm này thay thế setToken thường dùng. Nó sẽ Sync giỏ hàng trước khi Login.
+  const handleLogout = () => {
+    authLogout();
+    setVoucher(null);
+  };
+
   const handleLogin = async (newToken) => {
-    // Kiểm tra: Nếu có giỏ hàng Guest (Local) thì Sync lên Server
     if (cartItems && cartItems.length > 0) {
       try {
-        console.log("🔄 Đang đồng bộ giỏ hàng Guest lên Server...", cartItems);
-
-        // Gọi API Sync mà bạn đã tạo ở Backend
         await axios.post(
           url + "/api/cart/sync",
-          { items: cartItems }, // Gửi danh sách món ăn hiện tại
-          { headers: { Authorization: `Bearer ${newToken}` } } // Dùng token mới để xác thực
+          { items: cartItems },
+          { headers: { Authorization: `Bearer ${newToken}` } }
         );
-
-        console.log("✅ Đồng bộ giỏ hàng thành công!");
       } catch (error) {
-        console.log("⚠️ Lỗi đồng bộ giỏ hàng (Không ảnh hưởng Login):", error);
+        console.log("Error syncing cart:", error);
       }
     }
-
-    // Sau khi Sync xong (hoặc dù lỗi), mới gọi setToken của useAuth
-    // Lúc này useCart sẽ chạy lại và fetch giỏ hàng mới nhất (đã được merge) từ DB về.
     setToken(newToken);
   };
 
-  // -------------------------------------------------
-  // 3. CONTEXT VALUE
-  // -------------------------------------------------
+  // ==========================================================
+  // 3. LOGIC TÍNH TOÁN TIỀN (PHẦN QUAN TRỌNG MỚI THÊM)
+  // ==========================================================
+
+  // Hàm này sẽ tính lại tiền giảm giá mỗi khi Component render
+  const getDiscountAmount = () => {
+    const total = getTotalCartAmount();
+    if (!voucher) return 0;
+
+    try {
+      // Nếu giảm theo %
+      if (voucher.type === "percentage") {
+        // voucher.value là số % (VD: 10)
+        return Math.floor((total * voucher.value) / 100);
+      }
+
+      // Nếu giảm tiền cố định (fixed)
+      // Không cho giảm quá số tiền đơn hàng (tránh âm tiền)
+      return Math.min(voucher.value, total);
+    } catch (e) {
+      console.error("Lỗi tính tiền voucher:", e);
+      return 0;
+    }
+  };
+
+  const getFinalTotal = () => {
+    const total = getTotalCartAmount();
+    const discount = getDiscountAmount();
+    const deliveryFee = total === 0 ? 0 : 20000; // Phí ship ví dụ 20k
+
+    return Math.max(0, total - discount + deliveryFee);
+  };
+
+  // 4. CONTEXT VALUE
   const contextValue = {
     url,
     backendUrl,
-
-    // Auth
     token,
-    setToken: handleLogin, // 💡 Ghi đè setToken bằng hàm handleLogin thông minh hơn
-
-    logout: handleLogout, // Ghi đè logout để clear Voucher khi Logout
-
-    // Food
+    setToken: handleLogin,
+    logout: handleLogout,
     foodList,
     setFoodList,
     loading,
-
-    // Cart
     cartItems,
     addToCart,
     removeFromCart,
     updateCartItem,
     getTotalCartAmount,
     clearCart,
-
-    // Voucher
+    setCartItems,
+    loadCartData,
     voucher,
     setVoucher,
+
+    // --- EXPORT HÀM MỚI RA ĐỂ DÙNG ---
+    getDiscountAmount,
+    getFinalTotal,
+    deliveryFee: 20000,
   };
 
   return (

@@ -3,12 +3,18 @@ import ReactDOM from "react-dom";
 import "./VoucherPopup.css";
 
 const VoucherPopup = ({ isOpen, onClose, userVouchers = [], onApply }) => {
+  // Khởi tạo state là chuỗi rỗng để tránh lỗi uncontrolled ngay từ đầu
   const [inputCode, setInputCode] = useState("");
 
   useEffect(() => {
+    // Khóa cuộn trang khi mở popup
     document.body.style.overflow = isOpen ? "hidden" : "auto";
 
-    // Cleanup khi unmount
+    // Reset input khi đóng popup để lần sau mở ra nó trống
+    if (!isOpen) {
+      setInputCode("");
+    }
+
     return () => {
       document.body.style.overflow = "auto";
     };
@@ -17,8 +23,10 @@ const VoucherPopup = ({ isOpen, onClose, userVouchers = [], onApply }) => {
   if (!isOpen) return null;
 
   const handleUseVoucher = (code) => {
-    setInputCode(code);
-    onApply(code);
+    // Đảm bảo code luôn là chuỗi trước khi set state
+    const validCode = code || "";
+    setInputCode(validCode);
+    onApply(validCode);
   };
 
   const handleSubmit = () => {
@@ -26,7 +34,6 @@ const VoucherPopup = ({ isOpen, onClose, userVouchers = [], onApply }) => {
     onApply(inputCode.trim());
   };
 
-  // Render popup ra ngoài root div bằng Portal
   return ReactDOM.createPortal(
     <div className="voucher-popup-overlay" onClick={onClose}>
       <div className="voucher-popup" onClick={(e) => e.stopPropagation()}>
@@ -45,8 +52,11 @@ const VoucherPopup = ({ isOpen, onClose, userVouchers = [], onApply }) => {
             type="text"
             className="voucher-popup-input"
             placeholder="Nhập mã giảm giá của bạn"
-            value={inputCode}
+            // --- SỬA LỖI 1: Thêm || "" để tránh undefined ---
+            value={inputCode || ""}
             onChange={(e) => setInputCode(e.target.value)}
+            // Tự động focus giúp tiện hơn cho user
+            autoFocus
           />
 
           <button
@@ -62,27 +72,32 @@ const VoucherPopup = ({ isOpen, onClose, userVouchers = [], onApply }) => {
         <div className="voucher-popup-list">
           {userVouchers.length > 0 ? (
             userVouchers.map((v) => (
-              <div key={v.code} className="voucher-popup-card">
+              // --- SỬA LỖI 2: Dùng v._id thay vì v.code để đảm bảo duy nhất ---
+              <div key={v._id} className="voucher-popup-card">
                 <div className="voucher-popup-card-info">
-                  <h3>{v.code}</h3>
+                  {/* Hiển thị code, nếu không có thì hiện thông báo */}
+                  <h3>{v.code || "Mã tự động"}</h3>
                   <p>
                     {v.type === "percentage"
                       ? `Giảm ${v.value}%`
-                      : `Giảm ${v.value.toLocaleString("vi-VN")}₫`}
+                      : `Giảm ${v.value?.toLocaleString("vi-VN")}₫`}
                   </p>
 
                   <p className="expiry">
                     HSD:{" "}
-                    {new Date(v.endDate).toLocaleDateString("vi-VN", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                    })}
+                    {v.endDate
+                      ? new Date(v.endDate).toLocaleDateString("vi-VN", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                        })
+                      : "Không thời hạn"}
                   </p>
                 </div>
 
                 <button
                   className="voucher-popup-use-btn"
+                  // Truyền v.code vào, cẩn thận nếu code null
                   onClick={() => handleUseVoucher(v.code)}
                 >
                   Dùng mã này
@@ -91,6 +106,7 @@ const VoucherPopup = ({ isOpen, onClose, userVouchers = [], onApply }) => {
             ))
           ) : (
             <div className="voucher-popup-empty">
+              {/* Lưu ý: Đảm bảo bạn có file ảnh này trong public folder */}
               <img src="/empty-voucher.png" alt="empty" />
               <p>Chưa có mã giảm giá</p>
               <span>
@@ -106,7 +122,7 @@ const VoucherPopup = ({ isOpen, onClose, userVouchers = [], onApply }) => {
         </button>
       </div>
     </div>,
-    document.body // Render vào body thay vì trong component cha
+    document.body
   );
 };
 

@@ -331,3 +331,35 @@
 .order-table td {
     padding: 12px 10px;
 }
+
+/* Badge cho phương thức thanh toán Online chung */
+.payment-badge.online {
+    background: #e3f2fd;
+    color: #1565c0;
+    /* Xanh dương đậm */
+    border: 1px solid #bbdefb;
+}
+
+/* Badge Trạng thái: Đã thanh toán */
+.status-paid {
+    color: #2e7d32;
+    /* Xanh lá cây */
+    font-weight: 700;
+    font-size: 13px;
+    background: #e8f5e9;
+    padding: 4px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+/* Badge Trạng thái: Chưa thanh toán */
+.status-unpaid {
+    color: #c62828;
+    /* Đỏ */
+    font-weight: 600;
+    font-size: 13px;
+    background: #ffebee;
+    padding: 4px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+}

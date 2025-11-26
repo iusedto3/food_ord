@@ -32,21 +32,32 @@ const CartVoucher = () => {
         code,
         orderTotal: getTotalCartAmount(),
       });
-      const data = res.data;
-      if (data.success && data.data?.valid) {
-        const v = data.data;
+
+      // Axios trả về dữ liệu trong res.data
+      const responseData = res.data;
+
+      // Kiểm tra dựa trên cấu trúc Backend trả về
+      if (responseData.success && responseData.valid) {
         setVoucher({
-          code: v.promotion.code,
-          discount: v.discount,
-          type: v.promotion.type,
-          value: v.promotion.value,
+          code: responseData.promotion.code,
+          discount: responseData.discount, // Lấy trực tiếp, không qua .data
+          type: responseData.promotion.type,
+          value: responseData.promotion.value,
         });
+
+        // Có thể thay alert bằng toast notification cho đẹp
+        alert("Áp dụng mã thành công!");
         setIsPopupOpen(false);
       } else {
-        alert(data.message || "Mã không hợp lệ");
+        // Backend trả về success: false hoặc valid: false
+        alert(responseData.message || "Mã không hợp lệ");
+        setVoucher(null); // Reset nếu mã sai
       }
     } catch (err) {
-      alert(err.response?.data?.message || "Lỗi kiểm tra mã");
+      console.error(err);
+      // Xử lý lỗi từ server (VD: 500 hoặc 400)
+      const errorMessage = err.response?.data?.message || "Lỗi kiểm tra mã";
+      alert(errorMessage);
     }
   };
 

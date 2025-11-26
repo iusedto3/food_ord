@@ -20,11 +20,12 @@ export const config = {
 
     // ZALOPAY (Thông tin test mặc định của ZaloPay Sandbox)
     zalopay: {
-        app_id: "2553", // AppID Sandbox mặc định
-        key1: "PcY4iZIKFCIdgZvA6ueMcMHHUbRLYjPL", // Key1 Sandbox
-        key2: "kLtgPl8HHhfvMuDHPwKfgfsY4Ydm9eIz", // Key2 Sandbox
+        app_id: "2553", // Sandbox App ID mặc định
+        key1: "PcY4iZIKFCIdgZvA6ueMcMHHUbRLYjPL", // Key 1 chuẩn Sandbox
+        key2: "kLtgPl8HHhfvMuDHPwKfgfsY4Ydm9eIz",
         endpoint: "https://sb-openapi.zalopay.vn/v2/create",
-        returnUrl: `${process.env.FRONTEND_URL}/verify?method=zalopay`,
+        // Đảm bảo URL này đúng định dạng, ví dụ: http://localhost:5173/verify?method=zalopay
+        returnUrl: `${process.env.FRONTEND_URL}/verify?method=zalopay`, 
         callbackUrl: `${process.env.BACKEND_URL}/api/payment/zalopay-callback`
     }
 };

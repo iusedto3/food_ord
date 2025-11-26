@@ -6,7 +6,7 @@ import { placeOrder, getOrderDetail, getAllOrders, updateOrderStatus, getUserOrd
 const orderRouter = express.Router();
 
 orderRouter.post('/place',  placeOrder);
-orderRouter.get('/my-orders', authMiddleware, getUserOrders);
+orderRouter.post('/userorders', authMiddleware, getUserOrders);
 
 orderRouter.get('/admin/dashboard', getDashboardStats);
 
@@ -17,5 +17,7 @@ orderRouter.get("/admin/orders", getAllOrders);
 orderRouter.put("/admin/update-status/:orderId", updateOrderStatus);
 
 orderRouter.post('/verify', verifyOrder);
+
+orderRouter.get("/detail/:orderId", getOrderDetail);
 
 export default orderRouter;

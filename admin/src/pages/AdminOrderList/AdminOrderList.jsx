@@ -59,7 +59,6 @@ const AdminOrderList = () => {
           (o.customer?.phone && o.customer.phone.includes(lowerTerm))
       );
     }
-
     setFilteredOrders(result);
     setCurrentPage(1);
   }, [orders, statusFilter, searchTerm]);
@@ -121,12 +120,14 @@ const AdminOrderList = () => {
             <tr>
               <th>Mã đơn</th>
               <th>Khách hàng</th>
-              {/* 👇 CỘT MỚI: Địa chỉ */}
               <th>Địa chỉ giao hàng</th>
-              {/* 👇 CỘT MỚI: Ngày đặt */}
               <th>Ngày đặt</th>
 
+              <th>PTTT</th>
+              <th>Thanh toán</th>
+
               <th className="text-end">Tổng tiền</th>
+              {/* ✅ MỞ LẠI CỘT GIẢM GIÁ */}
               <th className="text-end">Giảm giá</th>
               <th className="text-end">Thực thu</th>
 
@@ -140,8 +141,9 @@ const AdminOrderList = () => {
               currentOrders.map((o) => {
                 // Tính toán
                 const subtotal = o.amount || 0;
-                const shipping = o.shippingFee || 15000;
+                const shipping = o.shippingFee || 20000;
                 const discount = o.discountAmount || 0;
+                // Thực thu = Tổng tiền + Ship - Giảm giá
                 const finalTotal = Math.max(0, subtotal + shipping - discount);
 
                 return (
@@ -157,7 +159,6 @@ const AdminOrderList = () => {
                       </div>
                     </td>
 
-                    {/* 👇 HIỂN THỊ ĐỊA CHỈ GIAO HÀNG */}
                     <td style={{ maxWidth: "200px" }}>
                       <div className="address-cell">
                         <span>{o.address?.street}</span>
@@ -166,13 +167,11 @@ const AdminOrderList = () => {
                           style={{ display: "block", lineHeight: "1.2" }}
                         >
                           {getWardName(o.address?.wardCode)},{" "}
-                          {getDistrictName(o.address?.districtCode)},{" "}
-                          {getProvinceName(o.address?.cityCode)}
+                          {getDistrictName(o.address?.districtCode)}
                         </small>
                       </div>
                     </td>
 
-                    {/* 👇 HIỂN THỊ NGÀY ĐẶT HÀNG */}
                     <td>
                       <div className="date-cell">
                         <span>
@@ -187,21 +186,66 @@ const AdminOrderList = () => {
                       </div>
                     </td>
 
-                    {/* Các cột tiền */}
+                    {/* CỘT 1: Phương thức thanh toán */}
+                    <td>
+                      <span
+                        className={`payment-badge ${
+                          o.paymentMethod === "cod" ? "cod" : "online"
+                        }`}
+                      >
+                        {o.paymentMethod === "cod"
+                          ? "Tiền mặt"
+                          : o.paymentMethod.toUpperCase()}
+                      </span>
+                    </td>
+
+                    {/* CỘT 2: Trạng thái thanh toán */}
+                    <td>
+                      {o.paymentStatus === "paid" ? (
+                        <span className="status-paid">Đã thanh toán</span>
+                      ) : (
+                        <span className="status-unpaid">Chưa thanh toán</span>
+                      )}
+                    </td>
+
+                    {/* Tổng tiền hàng + Ship */}
                     <td className="text-end">
                       {(subtotal + shipping).toLocaleString()}đ
                     </td>
 
+                    {/* ✅ CỘT GIẢM GIÁ (MỚI BỔ SUNG) */}
                     <td className="text-end">
                       {discount > 0 ? (
-                        <span style={{ color: "#e4002b", fontWeight: "600" }}>
-                          -{discount.toLocaleString()}đ
-                        </span>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "flex-end",
+                          }}
+                        >
+                          <span style={{ color: "#c62828", fontWeight: "600" }}>
+                            -{discount.toLocaleString()}đ
+                          </span>
+                          {o.voucherCode && (
+                            <small
+                              style={{
+                                fontSize: "10px",
+                                color: "#666",
+                                background: "#f5f5f5",
+                                padding: "1px 4px",
+                                borderRadius: "3px",
+                              }}
+                            >
+                              {o.voucherCode}
+                            </small>
+                          )}
+                        </div>
                       ) : (
                         <span style={{ color: "#ccc" }}>-</span>
                       )}
                     </td>
 
+                    {/* Thực thu */}
                     <td className="text-end">
                       <span
                         style={{
@@ -231,7 +275,8 @@ const AdminOrderList = () => {
               })
             ) : (
               <tr>
-                <td colSpan="9" className="empty-row">
+                {/* Tăng colSpan lên 12 vì bảng hiện tại khá nhiều cột */}
+                <td colSpan="12" className="empty-row">
                   Không có đơn hàng nào.
                 </td>
               </tr>

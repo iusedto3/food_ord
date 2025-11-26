@@ -1,21 +1,19 @@
 import React from "react";
 import "./CartSummary.css";
 
-// Component này bây giờ CHỈ NHẬN PROPS để hiển thị.
-// Không tự tính toán, không tự gọi Context để tránh sai lệch.
-const CartSummary = ({ subtotal, discount }) => {
-  const delivery = 15000;
-
-  // Đảm bảo tổng không bị âm
-  const totalPay = Math.max(0, subtotal - discount) + delivery;
-
+// Nhận thêm props 'delivery' và 'total' để không phải tự tính
+const CartSummary = ({
+  subtotal = 0,
+  discount = 0,
+  delivery = 0,
+  total = 0,
+}) => {
   return (
     <div className="cart-box summary-box">
       <h3 className="box-title">Tóm tắt đơn hàng</h3>
 
       <div className="summary-row">
         <span>Tạm tính</span>
-        {/* Hiển thị số tiền được truyền từ PageCart -> Sidebar -> Summary */}
         <span>{subtotal.toLocaleString()}đ</span>
       </div>
 
@@ -31,14 +29,19 @@ const CartSummary = ({ subtotal, discount }) => {
 
       <div className="summary-row">
         <span>Phí giao hàng</span>
-        <span>{delivery.toLocaleString()}đ</span>
+        {/* Nhận giá trị từ props thay vì fix cứng 15000 */}
+        <span>
+          {delivery === 0 ? "Miễn phí" : `${delivery.toLocaleString()}đ`}
+        </span>
       </div>
 
       <hr />
 
       <div className="summary-total">
         <span>Tổng cộng</span>
-        <span>{totalPay.toLocaleString()}đ</span>
+        <span style={{ fontSize: "18px", fontWeight: "bold" }}>
+          {total.toLocaleString()}đ
+        </span>
       </div>
     </div>
   );

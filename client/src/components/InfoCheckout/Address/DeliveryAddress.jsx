@@ -256,7 +256,7 @@ const DeliveryAddress = ({
           </select>
         </div>
 
-        <div className="form-group full-width">
+        {/* <div className="form-group full-width">
           <label>Ghi chú</label>
           <input
             type="text"
@@ -275,7 +275,7 @@ const DeliveryAddress = ({
             <option value="now">🚀 Giao ngay</option>
             <option value="later">📅 Hẹn giờ</option>
           </select>
-        </div>
+        </div> */}
 
         {/* 👇👇👇 PHẦN CHECKBOX LƯU ĐỊA CHỈ (Đã thêm lại) 👇👇👇 */}
         {/* 👇 BỎ ĐIỀU KIỆN !addressData.selectedId ĐỂ LUÔN HIỆN 👇 */}

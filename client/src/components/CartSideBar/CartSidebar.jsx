@@ -5,13 +5,13 @@ import CheckoutButton from "./CheckoutButton/CheckoutButton";
 import { StoreContext } from "../../contexts/StoreContext";
 import "./CartSidebar.css";
 
-const CartSidebar = ({ cartTotal }) => {
-  const { voucher } = useContext(StoreContext);
-
-  // Lấy giá trị giảm giá từ voucher (nếu không có thì bằng 0)
-  const discountAmount = voucher ? voucher.discount : 0;
-
-  console.log("Voucher trong Sidebar:", voucher); // Debug log
+const CartSidebar = () => {
+  const {
+    getTotalCartAmount,
+    getDiscountAmount,
+    getFinalTotal,
+    deliveryFee, // <--- Đảm bảo bạn đã export biến này ở StoreContext
+  } = useContext(StoreContext);
 
   return (
     <div className="cart-sidebar">
@@ -19,8 +19,12 @@ const CartSidebar = ({ cartTotal }) => {
       <CartVoucher />
 
       {/* 2. Phần tính tiền (Chỉ hiển thị) */}
-      <CartSummary subtotal={cartTotal} discount={discountAmount} />
-
+      <CartSummary
+        subtotal={getTotalCartAmount()}
+        discount={getDiscountAmount()}
+        delivery={deliveryFee || 0} // Nếu deliveryFee chưa có, truyền 0 để tránh lỗi
+        total={getFinalTotal()}
+      />
       {/* 3. Nút thanh toán */}
       <CheckoutButton />
     </div>

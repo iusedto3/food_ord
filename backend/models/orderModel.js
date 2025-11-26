@@ -22,7 +22,7 @@ const orderSchema = new mongoose.Schema({
   
   // --- THÔNG TIN TIỀN ---
   amount: { type: Number, required: true }, // Tổng tiền hàng
-  shippingFee: { type: Number, default: 15000 },
+  shippingFee: { type: Number, default: 20000 },
   discountAmount: { type: Number, default: 0 }, // Số tiền giảm
   voucherCode: { type: String, default: "" },   // Mã voucher đã dùng (nếu có)
 

@@ -1,5 +1,6 @@
 import React from "react";
 import { formatVND, formatDate } from "../../../utils/format";
+// Lưu ý: Đảm bảo bạn đã import CSS nếu cần, hoặc dùng chung CSS toàn cục
 
 const SuccessSummary = ({ order }) => {
   if (!order) {
@@ -8,14 +9,12 @@ const SuccessSummary = ({ order }) => {
 
   const items = order.items || [];
 
-  // 1. Tính toán các loại tiền
+  // 1. Tính toán lại dựa trên dữ liệu đã lưu trong DB (Snapshot)
   const subtotal = items.reduce((s, it) => s + (it.totalPrice || 0), 0);
   const shipping = order.shippingFee || 0;
-
-  // 👇 Lấy tiền giảm giá từ dữ liệu order (nếu không có thì bằng 0)
   const discount = order.discountAmount || 0;
 
-  // 👇 Tính tổng tiền cuối cùng (Subtotal + Ship - Discount)
+  // Tính tổng để hiển thị (Hoặc dùng order.amount nếu backend đã lưu tổng cuối)
   const total = Math.max(0, subtotal + shipping - discount);
 
   return (
@@ -47,40 +46,14 @@ const SuccessSummary = ({ order }) => {
             {/* Thông tin món */}
             <div className="item-info">
               <div className="item-name">{item.name}</div>
-
-              {item.size && (
-                <div className="item-size">
-                  <span>Kích cỡ: {item.size}</span>
-                </div>
-              )}
-
-              {item.crust && (
-                <div className="item-crust">
-                  <span>Đế bánh: {item.crust.label}</span>
-                </div>
-              )}
-
-              {item.toppings?.length > 0 && (
-                <div className="item-toppings">
-                  {item.toppings.map((tp, i) => (
-                    <div key={i} className="topping-line">
-                      + {tp.label}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {item.note && (
-                <div className="item-note">
-                  <em>Ghi chú: {item.note}</em>
-                </div>
-              )}
+              {/* Hiển thị chi tiết (Size, Topping...) nếu có */}
+              <div style={{ fontSize: "13px", color: "#666" }}>
+                {item.size && <span>Size: {item.size} </span>}
+                {item.quantity > 1 && <span>x{item.quantity}</span>}
+              </div>
             </div>
 
-            {/* Số lượng */}
-            <div className="item-qty">x{item.quantity}</div>
-
-            {/* Giá */}
+            {/* Giá tiền */}
             <div className="item-price">{formatVND(item.totalPrice)}</div>
           </div>
         ))}
@@ -93,12 +66,14 @@ const SuccessSummary = ({ order }) => {
           <span>{formatVND(subtotal)}</span>
         </div>
 
-        {/* 👇 BỔ SUNG: Dòng giảm giá (Chỉ hiện khi có discount) */}
+        {/* Dòng giảm giá: Thêm style màu xanh */}
         {discount > 0 && (
-          <div className="summary-row discount">
+          <div
+            className="total-row"
+            style={{ color: "#2e7d32", fontWeight: "500" }}
+          >
             <span>
-              Voucher giảm giá{" "}
-              {order.voucherCode ? `(${order.voucherCode})` : ""}
+              Voucher {order.voucherCode ? `(${order.voucherCode})` : ""}
             </span>
             <span>-{formatVND(discount)}</span>
           </div>

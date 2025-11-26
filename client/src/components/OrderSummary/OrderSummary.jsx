@@ -4,19 +4,24 @@ import { FiChevronRight, FiInfo } from "react-icons/fi";
 import "./OrderSummary.css";
 
 const OrderSummary = ({ onPlaceOrder, loading }) => {
-  const { cartItems, getTotalCartAmount, voucher } = useContext(StoreContext);
+  // 1. Lấy toàn bộ hàm tính toán từ Context (Single Source of Truth)
+  const {
+    cartItems,
+    getTotalCartAmount,
+    getDiscountAmount,
+    getFinalTotal,
+    deliveryFee, // Lấy phí ship từ Context (để khớp với bên Cart)
+  } = useContext(StoreContext);
+
   const [agreed, setAgreed] = useState(true);
 
+  // 2. Gọi hàm để lấy giá trị (Không tự tính tay nữa)
   const subtotal = getTotalCartAmount();
+  const discount = getDiscountAmount();
+  const total = getFinalTotal();
 
-  // 🟢 CẬP NHẬT 1: Logic phí giao hàng
-  // Nếu giỏ hàng có món thì phí là 15.000đ, nếu rỗng thì 0đ
-  const deliveryFee = subtotal === 0 ? 0 : 15000;
-
-  const discount = voucher ? Number(voucher.discount) : 0;
-
-  // Tính tổng: (Tổng tiền + Ship - Voucher), không được âm
-  const total = Math.max(0, subtotal + deliveryFee - discount);
+  // Xử lý hiển thị phí ship: Nếu giỏ rỗng thì hiện 0, ngược lại hiện phí ship từ Context
+  const displayedDeliveryFee = subtotal === 0 ? 0 : deliveryFee;
 
   return (
     <>
@@ -35,9 +40,7 @@ const OrderSummary = ({ onPlaceOrder, loading }) => {
           <strong>{subtotal.toLocaleString()} ₫</strong>
         </div>
 
-        {/* 🔴 ĐÃ XÓA: Dòng "Giảm giá thành viên" theo yêu cầu */}
-
-        {/* Dòng Voucher (chỉ hiện khi có áp dụng mã) */}
+        {/* Dòng Voucher (chỉ hiện khi có tiền giảm > 0) */}
         {discount > 0 && (
           <div className="summary-row" style={{ color: "#2e7d32" }}>
             <span>Voucher giảm giá</span>
@@ -49,7 +52,7 @@ const OrderSummary = ({ onPlaceOrder, loading }) => {
           <span>
             Phí giao hàng <FiInfo size={12} style={{ color: "#999" }} />
           </span>
-          <strong>{deliveryFee.toLocaleString()} ₫</strong>
+          <strong>{displayedDeliveryFee.toLocaleString()} ₫</strong>
         </div>
 
         <div className="summary-row total">
@@ -73,7 +76,8 @@ const OrderSummary = ({ onPlaceOrder, loading }) => {
 
         <button
           className="btn-place-order-final"
-          disabled={!agreed || loading || subtotal === 0} // Disable nếu giỏ hàng rỗng
+          // Disable nếu: Chưa đồng ý HOẶC Đang loading HOẶC Giỏ hàng rỗng
+          disabled={!agreed || loading || subtotal === 0}
           onClick={onPlaceOrder}
         >
           {loading ? "Đang xử lý..." : "Đặt hàng"}

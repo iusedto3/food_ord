@@ -7,17 +7,15 @@ import jwt from "jsonwebtoken";
 import { processPayment } from "../Services/payment/paymentService.js";
 
 // ---------------------------
-// PLACE ORDER
+// 1. PLACE ORDER
 // ---------------------------
 export const placeOrder = async (req, res) => {
-  // Lấy dữ liệu từ req.body
-  let { userId, address, customer, amount, paymentMethod, items, voucher } = req.body;
+  // Không cần lấy finalTotal từ Frontend nữa
+  let { userId, address, customer, amount, shippingFee, paymentMethod, items, voucher } = req.body;
   let cartItems = [];
 
   try {
-    // ---------------------------
-    // 0. THÔNG MINH: Tự lấy userId từ Token nếu Frontend gửi thiếu
-    // ---------------------------
+    // 0. Lấy userId từ Token (Logic cũ)
     if (!userId && req.headers.authorization) {
       try {
         const token = req.headers.authorization.split(" ")[1];
@@ -25,19 +23,13 @@ export const placeOrder = async (req, res) => {
           const decoded = jwt.verify(token, process.env.JWT_SECRET);
           userId = decoded.id; 
         }
-      } catch (e) {
-        // Token lỗi hoặc hết hạn -> coi như Guest
-      }
+      } catch (e) {}
     }
 
-    // ---------------------------
-    // 1. Phân biệt USER và GUEST để lấy cartItems
-    // ---------------------------
+    // 1. Lấy cartItems (Logic cũ)
     if (userId) {
       const user = await userModel.findById(userId);
       if (!user) return res.json({ success: false, msg: "User không tồn tại" });
-      
-      // Ưu tiên lấy từ DB, nếu DB rỗng thì lấy từ req.body (fallback)
       cartItems = (user.cartData && user.cartData.length > 0) ? user.cartData : (items || []);
     } else {
       cartItems = items;
@@ -47,48 +39,64 @@ export const placeOrder = async (req, res) => {
       return res.json({ success: false, msg: "Giỏ hàng trống" });
     }
 
-    // Xử lý Voucher
+    // ---------------------------------------------------
+    // 🟢 2. TÍNH TOÁN TIỀN (Server Side Calculation)
+    // ---------------------------------------------------
+    
+    // A. Tạm tính (Lấy từ req.body hoặc tự tính lại từ cartItems để an toàn hơn)
+    // Ở đây ta tạm tin tưởng amount từ frontend gửi lên để đơn giản hóa
+    const subtotal = Number(amount);
+
+    // B. Phí ship (Mặc định 20k nếu thiếu)
+    const finalShippingFee = shippingFee !== undefined ? Number(shippingFee) : 20000;
+
+    // C. Voucher
     let discountAmount = 0;
     let voucherCode = "";
     if (voucher) {
+        // Nếu voucher hợp lệ thì tính tiền giảm
+        // (Thực tế nên query DB kiểm tra voucher lần nữa, nhưng ở đây ta lấy tạm từ body)
         discountAmount = Number(voucher.discount) || 0;
         voucherCode = voucher.code || "";
     }
 
-    // Validation
-    if (!address || !customer || !amount || !paymentMethod) {
-      return res.json({ success: false, msg: "Thiếu dữ liệu order" });
+    // D. TỔNG THANH TOÁN CUỐI CÙNG (QUAN TRỌNG NHẤT)
+    // Công thức: Tạm tính + Ship - Giảm giá
+    const amountToPay = Math.max(0, subtotal + finalShippingFee - discountAmount);
+
+    // 👉 LOG ĐỂ DEBUG (Xem trong Terminal)
+    console.log("========= TÍNH TOÁN ĐƠN HÀNG =========");
+    console.log(`💰 Tạm tính: ${subtotal}`);
+    console.log(`🚚 Phí ship: ${finalShippingFee}`);
+    console.log(`🎟  Giảm giá: -${discountAmount}`);
+    console.log(`✅ THỰC THU (Gửi sang Zalo): ${amountToPay}`);
+    console.log("======================================");
+
+    // Validation cơ bản
+    if (!address || !customer || !paymentMethod) {
+      return res.json({ success: false, msg: "Thiếu thông tin giao hàng" });
     }
 
-    // ---------------------------
-    // 2. CHUẨN HÓA ITEMS & TÍNH TOÁN
-    // ---------------------------
+    // 3. Chuẩn hóa items (Logic cũ)
     const itemsWithTotalPrice = cartItems.map((item) => {
       const itemObj = (item.toObject && typeof item.toObject === 'function') ? item.toObject() : item;
-      const finalBasePrice = itemObj.basePrice !== undefined ? itemObj.basePrice : (itemObj.price || 0);
-      const finalItemId = itemObj.itemId || itemObj._id;
-      const toppingsPrice = Array.isArray(itemObj.toppings) ? itemObj.toppings.reduce((sum, t) => sum + (t.price || 0), 0) : 0;
-      const itemTotalPrice = (finalBasePrice + toppingsPrice) * (itemObj.quantity || 1);
-
       return {
         ...itemObj,
-        itemId: finalItemId,       
-        basePrice: finalBasePrice, 
-        totalPrice: itemTotalPrice,
+        itemId: itemObj.itemId || itemObj._id,       
+        basePrice: itemObj.basePrice || itemObj.price || 0, 
+        totalPrice: itemObj.totalPrice || 0,
       };
     });
 
-    // ---------------------------
-    // 3. TẠO ORDER (TRẠNG THÁI PENDING)
-    // ---------------------------
+    // 4. TẠO ORDER VÀO DB
     const newOrder = new orderModel({
       orderId: generateOrderId(),
       userId: userId || undefined,
       items: itemsWithTotalPrice,  
-      amount,
-      discountAmount,
+      amount: subtotal,            // Lưu Tạm tính
+      discountAmount,    // Lưu Tiền giảm
       voucherCode,
-      shippingFee: 15000,
+      shippingFee: finalShippingFee, // Lưu Phí ship
       address,
       customer,
       paymentMethod,
@@ -99,20 +107,13 @@ export const placeOrder = async (req, res) => {
 
     await newOrder.save();
 
-    // ---------------------------
-    // 4. XỬ LÝ THANH TOÁN ONLINE (MỚI)
-    // ---------------------------
+    // 5. XỬ LÝ THANH TOÁN ONLINE
     if (paymentMethod !== 'cod') {
         try {
-            console.log(`🔄 Đang tạo link thanh toán ${paymentMethod}...`); // Log 1
-
-            // Gọi Service
-            const paymentUrl = await processPayment(paymentMethod, newOrder._id, amount);
+            // Gửi đúng con số amountToPay đã tính ở trên
+            const paymentUrl = await processPayment(paymentMethod, newOrder._id, amountToPay);
             
-            console.log("✅ Link thanh toán:", paymentUrl); // Log 2
-
             if (paymentUrl) {
-                // Nếu có link thì trả về luôn
                 return res.json({ 
                     success: true, 
                     message: "Redirect to Payment", 
@@ -120,28 +121,18 @@ export const placeOrder = async (req, res) => {
                     paymentUrl 
                 });
             } else {
-                // Nếu không tạo được link (ví dụ lỗi Stripe), throw lỗi để xuống catch
-                throw new Error("Không tạo được paymentUrl (kết quả null)");
+                throw new Error("Không tạo được link thanh toán");
             }
         } catch (err) {
-            // 👇 IN LỖI RA TERMINAL ĐỂ DEBUG
-            console.error("❌ LỖI THANH TOÁN ONLINE:", err);
-            
-            // Xóa đơn hàng lỗi để tránh rác DB
-            await orderModel.findByIdAndDelete(newOrder._id);
-            
-            return res.json({ 
-                success: false, 
-                message: "Lỗi tạo cổng thanh toán: " + err.message 
-            });
+            console.error("❌ Lỗi thanh toán:", err);
+            await orderModel.findByIdAndDelete(newOrder._id); // Xóa đơn lỗi
+            return res.json({ success: false, message: "Lỗi cổng thanh toán: " + err.message });
         }
     }
-    // ---------------------------
-    // 5. XỬ LÝ COD (MẶC ĐỊNH)
-    // ---------------------------
+    
+    // 6. XỬ LÝ COD
     try { await sendEmail(newOrder); } catch (err) {}
 
-    // Clear giỏ hàng
     if (userId) {
       await userModel.findByIdAndUpdate(userId, { cartData: [] });
     }
@@ -153,7 +144,7 @@ export const placeOrder = async (req, res) => {
     });
 
   } catch (err) {
-    console.log("❌ Error placeOrder:", err);
+    console.log("❌ Lỗi server:", err);
     return res.status(500).json({ success: false, msg: "Lỗi server", error: err.message });
   }
 };
@@ -167,7 +158,6 @@ const generateOrderId = () => {
   const random = Math.floor(1000 + Math.random() * 9000);
   return `PH${yy}${mm}${dd}${random}`;
 };
-
 export const getOrderDetail = async (req, res) => {
   try {
     const { orderId } = req.params;
@@ -180,21 +170,18 @@ export const getOrderDetail = async (req, res) => {
     return res.json({ success: false, msg: "Lỗi server", error: err.message });
   }
 };
-
 export const getUserOrders = async (req, res) => {
   try {
     const orders = await orderModel.find({ userId: req.body.userId }).sort({ createdAt: -1 });
     res.json({ success: true, orders });
   } catch (error) { res.json({ success: false, message: "Lỗi server!" }); }
 };
-
 export const getAllOrders = async (req, res) => {
   try {
     const orders = await orderModel.find({}).sort({ createdAt: -1 });
     return res.json({ success: true, orders });
   } catch (err) { return res.json({ success: false, msg: "Lỗi server", error: err.message }); }
 };
-
 export const updateOrderStatus = async (req, res) => {
   try {
     const { orderId } = req.params;
@@ -261,17 +248,59 @@ export const getDashboardStats = async (req, res) => {
 };
 
 export const verifyOrder = async (req, res) => {
-    const { orderId, success } = req.body;
-    try {
-        if (success === "true") {
-            await orderModel.findByIdAndUpdate(orderId, { paymentStatus: "paid" }); // Cập nhật đã thanh toán
-            res.json({ success: true, message: "Paid" });
-        } else {
-            await orderModel.findByIdAndDelete(orderId); // Nếu lỗi thì xóa đơn nháp đi
-            res.json({ success: false, message: "Not Paid" });
-        }
-    } catch (error) {
-        console.log(error);
-        res.json({ success: false, message: "Error" });
+  const { orderId, success, resultCode, status } = req.body;
+  
+  try {
+    let isSuccess = false;
+
+    // 1. Kiểm tra điều kiện thành công của từng cổng
+    // - Stripe: success = "true"
+    // - MoMo: resultCode = "0"
+    // - ZaloPay: status = "1"
+    if (success === "true" || 
+       (resultCode && resultCode.toString() === "0") || 
+       (status && status.toString() === "1")) {
+        isSuccess = true;
     }
-}
+
+    if (isSuccess) {
+      // 2. Cập nhật trạng thái đơn hàng thành "Đã thanh toán"
+      const updatedOrder = await orderModel.findByIdAndUpdate(orderId, { 
+          paymentStatus: "paid",
+          payment: true 
+      }, { new: true });
+
+      if (updatedOrder) {
+          // 3. Gửi Email xác nhận (Bọc try-catch để lỗi mail không chặn luồng chính)
+          try { 
+             await sendEmail(updatedOrder);
+             console.log("📧 Email xác nhận đã được gửi.");
+          } catch (e) {
+             console.error("❌ Lỗi gửi email:", e.message);
+          }
+
+          // 4. 🔴 QUAN TRỌNG: XÓA SẠCH GIỎ HÀNG 🔴
+          // Chúng ta update cả 'cart' và 'cartData' về mảng rỗng []
+          // để đảm bảo dù Model dùng tên gì thì cũng bị xóa sạch.
+          if (updatedOrder.userId) {
+              await userModel.findByIdAndUpdate(updatedOrder.userId, { 
+                  cart: [],      // Xóa trường cũ (nếu có)
+                  cartData: []   // Xóa trường mới (chuẩn)
+              });
+              console.log("🛒 Đã xóa sạch giỏ hàng (cart & cartData) của User:", updatedOrder.userId);
+          }
+      }
+
+      return res.json({ success: true, message: "Thanh toán thành công" });
+
+    } else {
+      // 5. Nếu thất bại (User hủy hoặc lỗi cổng) -> Xóa đơn hàng nháp
+      await orderModel.findByIdAndDelete(orderId);
+      return res.json({ success: false, message: "Thanh toán thất bại hoặc bị hủy" });
+    }
+
+  } catch (error) {
+    console.error("Verify Error:", error);
+    return res.json({ success: false, message: "Lỗi xác thực hệ thống" });
+  }
+};

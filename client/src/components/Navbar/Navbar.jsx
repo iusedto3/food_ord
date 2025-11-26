@@ -4,6 +4,7 @@ import { BiCart, BiSolidUserDetail } from "react-icons/bi";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { StoreContext } from "../../contexts/StoreContext";
 import { assets } from "../../assets/assets";
+// Đã xóa import FiBox, FiLogOut, FiUser
 
 const Navbar = ({ setShowLogin }) => {
   const { token, setToken, cartItems } = useContext(StoreContext);
@@ -12,12 +13,11 @@ const Navbar = ({ setShowLogin }) => {
   const dropdownRef = useRef(null);
   const location = useLocation();
 
-  // 🧩 Tính tổng số lượng món trong giỏ
+  // Tính tổng số lượng sản phẩm trong giỏ
   const totalItems = Object.values(cartItems || {}).reduce((sum, item) => {
     return sum + (item.quantity || 0);
   }, 0);
 
-  // 🔐 Đăng xuất
   const logout = () => {
     localStorage.removeItem("token");
     setToken("");
@@ -25,7 +25,7 @@ const Navbar = ({ setShowLogin }) => {
     navigate("/");
   };
 
-  // Đóng dropdown khi click bên ngoài
+  // Xử lý click ra ngoài để đóng dropdown
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -36,20 +36,20 @@ const Navbar = ({ setShowLogin }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Ẩn icon khi ở trang cart hoặc checkout
   const showIcons = !["/cart", "/checkout"].includes(location.pathname);
 
   return (
     <div className="navbar">
-      {/* 🏠 Logo giữa */}
       <div className="navbar-center">
         <Link to="/">
           <img src={assets.logo} alt="Logo" className="navbar-logo" />
         </Link>
       </div>
 
-      {/* 🛒 & 👤 Phải */}
       {showIcons && (
         <div className="navbar-right">
+          {/* GIỎ HÀNG */}
           <div className="navbar-cart">
             <Link to="/cart">
               <BiCart className="icon" />
@@ -59,6 +59,7 @@ const Navbar = ({ setShowLogin }) => {
             </Link>
           </div>
 
+          {/* PROFILE DROPDOWN */}
           <div className="navbar-profile" ref={dropdownRef}>
             <BiSolidUserDetail
               className={`icon profile-icon ${openDropdown ? "open" : ""} ${
@@ -66,9 +67,11 @@ const Navbar = ({ setShowLogin }) => {
               }`}
               onClick={() => setOpenDropdown(!openDropdown)}
             />
+
             {openDropdown && (
               <ul className={`dropdown ${openDropdown ? "open" : ""}`}>
                 {!token ? (
+                  // GIAO DIỆN KHÁCH (CHƯA LOGIN)
                   <>
                     <li>
                       <Link
@@ -86,16 +89,17 @@ const Navbar = ({ setShowLogin }) => {
                         Đăng ký
                       </Link>
                     </li>
-                    <li>
-                      <Link
-                        to="/track-order"
-                        onClick={() => setOpenDropdown(false)}
-                      >
-                        Theo dõi đơn hàng
-                      </Link>
+                    <li
+                      onClick={() => {
+                        navigate("/track-order");
+                        setOpenDropdown(false);
+                      }}
+                    >
+                      <p>Tra cứu đơn hàng</p>
                     </li>
                   </>
                 ) : (
+                  // GIAO DIỆN USER (ĐÃ LOGIN)
                   <>
                     <li>
                       <Link
@@ -105,14 +109,15 @@ const Navbar = ({ setShowLogin }) => {
                         Thông tin cá nhân
                       </Link>
                     </li>
-                    <li>
-                      <Link
-                        to="/track-order"
-                        onClick={() => setOpenDropdown(false)}
-                      >
-                        Theo dõi đơn hàng
-                      </Link>
+                    <li
+                      onClick={() => {
+                        navigate("/track-order");
+                        setOpenDropdown(false);
+                      }}
+                    >
+                      Đơn hàng của tôi
                     </li>
+                    <hr />
                     <li onClick={logout}>Đăng xuất</li>
                   </>
                 )}

@@ -24,30 +24,35 @@ export const getCart = async (req, res) => {
 // ===================== ADD TO CART =====================
 export const addToCart = async (req, res) => {
   try {
-    const {
-      userId,
-      _id: itemId,
-      size,
-      crust,
-      toppings = [],
-      note = "",
-      quantity = 1,
-      totalPrice,
-    } = req.body;
+    const { userId, _id: itemId, size, crust, toppings = [], note = "", quantity = 1 } = req.body;
 
     const user = await userModel.findById(userId);
-    if (!user) {
-      return res.json({ success: false, message: "Không tìm thấy người dùng" });
-    }
+    if (!user) return res.json({ success: false, message: "Không tìm thấy người dùng" });
 
-    if (!user.cart) user.cart = [];
+    if (!user.cartData) user.cartData = [];
 
+    // 1. Lấy thông tin gốc từ Database món ăn
     const food = await foodModel.findById(itemId);
-    if (!food) {
-      return res.json({ success: false, message: "Không tìm thấy món ăn" });
-    }
+    if (!food) return res.json({ success: false, message: "Không tìm thấy món ăn" });
 
-    const existingIndex = user.cart.findIndex(
+    // 2. TỰ TÍNH TOÁN GIÁ TRÊN SERVER (An toàn tuyệt đối)
+    let calculatedPrice = food.price; // Giá gốc
+
+    // Cộng tiền Size (Logic này phải khớp với logic bên Frontend)
+    if (size === "Lớn") calculatedPrice *= 1.35; // Ví dụ logic size
+    else if (size === "Nhỏ") calculatedPrice *= 0.9;
+
+    // Cộng tiền Topping
+    const toppingPrice = toppings.reduce((sum, t) => sum + (Number(t.price) || 0), 0);
+    
+    // Giá 1 sản phẩm
+    const unitPrice = Math.round(calculatedPrice + toppingPrice);
+    
+    // Tổng tiền cho item này
+    const finalTotalPrice = unitPrice * quantity;
+
+    // 3. Lưu vào giỏ hàng
+    const existingIndex = user.cartData.findIndex(
       (item) =>
         item._id.toString() === itemId &&
         item.size === size &&
@@ -57,8 +62,10 @@ export const addToCart = async (req, res) => {
     );
 
     if (existingIndex !== -1) {
-      user.cart[existingIndex].quantity += quantity;
-      user.cart[existingIndex].totalPrice = totalPrice * user.cart[existingIndex].quantity;
+      user.cartData[existingIndex].quantity += quantity;
+      // Cập nhật lại giá mới nhất (phòng trường hợp Admin vừa đổi giá món ăn)
+      user.cart[existingIndex].price = food.price; 
+      user.cart[existingIndex].totalPrice += finalTotalPrice;
     } else {
       user.cart.push({
         _id: itemId,
@@ -69,24 +76,19 @@ export const addToCart = async (req, res) => {
         toppings,
         note,
         quantity,
-        price: food.price,
-        totalPrice,
+        price: food.price, // Lưu giá gốc tham khảo
+        totalPrice: finalTotalPrice, // ✅ Lưu giá do Server tính
       });
     }
 
     await user.save();
 
-    return res.json({
-      success: true,
-      message: "Đã thêm vào giỏ hàng",
-      cartData: user.cart
-    });
+    return res.json({ success: true, message: "Đã thêm vào giỏ hàng", cartData: user.cart });
   } catch (err) {
     console.error("addToCart error:", err);
     res.json({ success: false, message: "Lỗi server!" });
   }
 };
-
 // ===================== REMOVE FROM CART =====================
 export const removeFromCart = async (req, res) => {
   try {
@@ -183,5 +185,30 @@ export const syncCart = async (req, res) => {
   } catch (err) {
     console.error("Sync cart error:", err);
     res.json({ success: false, message: "Lỗi đồng bộ giỏ hàng" });
+  }
+};
+
+// ===================== CLEAR CART (XÓA SẠCH) =====================
+export const clearCart = async (req, res) => {
+  try {
+    // Nhận userId từ body (nếu gọi API) hoặc từ tham số nội bộ
+    const userId = req.body.userId || req.userId; 
+
+    if (!userId) return res.json({ success: false, message: "Thiếu User ID" });
+
+    const user = await userModel.findById(userId);
+    if (!user) return res.json({ success: false, message: "User not found" });
+
+    // Xóa sạch mảng cart
+    user.cart = [];
+    await user.save();
+
+    // Nếu gọi qua API thì trả về JSON, còn gọi nội bộ thì thôi
+    if (res) {
+        return res.json({ success: true, message: "Giỏ hàng đã được làm trống" });
+    }
+  } catch (err) {
+    console.error("clearCart error:", err);
+    if (res) res.json({ success: false, message: "Lỗi dọn giỏ hàng" });
   }
 };

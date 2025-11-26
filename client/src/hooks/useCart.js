@@ -29,23 +29,30 @@ const useCart = (url, token) => {
     }
   }, [token]);
 
-  // ========== LOAD CART USER ==========
-  const loadUserCart = useCallback(async () => {
+  // ========== LOAD CART DATA (Cập nhật tên hàm để khớp với Context) ==========
+  const loadCartData = useCallback(async (specificToken) => {
     try {
-      const res = await api.post("/api/cart/get", {}, { headers: getAuthHeader() });
-      if (res.data.success) setCartItems(res.data.cartData || []);
-    } catch (err) {
-      console.error("loadUserCart error:", err?.response?.data || err.message);
-    }
-  }, [token]);
+      // Ưu tiên token truyền vào -> token props -> localStorage
+      const t = specificToken || token || localStorage.getItem("token");
+      const headers = t ? { Authorization: `Bearer ${t}` } : {};
 
-  // Tự động load cart khi F5
+      const res = await api.post("/api/cart/get", {}, { headers });
+      
+      if (res.data.success) {
+          setCartItems(res.data.cartData || []);
+      }
+    } catch (err) {
+      console.error("loadCartData error:", err?.response?.data || err.message);
+    }
+  }, [token]); // Dependency
+
+  // Tự động load cart khi F5 hoặc Token thay đổi
   useEffect(() => {
     const savedToken = localStorage.getItem("token");
     if (savedToken) {
-      loadUserCart();
+      loadCartData();
     }
-  }, [loadUserCart]);
+  }, [token, loadCartData]);
 
   // ========== ADD TO CART ==========
   const addToCart = async (foodData) => {
@@ -166,21 +173,20 @@ const useCart = (url, token) => {
 
   // ========== CLEAR ==========
   const clearCart = () => {
-    console.log("🧹 Đang dọn dẹp giỏ hàng..."); // Log để kiểm tra
+    console.log("🧹 Đang dọn dẹp giỏ hàng...");
     setCartItems([]);
     localStorage.removeItem("guestCart");
   };
 
-  // ========== TOTAL (Đã sửa lỗi logic) ==========
+  // ========== TOTAL ==========
   const getTotalCartAmount = () => {
     return cartItems.reduce((sum, item) => {
-      // 1. Ưu tiên dùng totalPrice (giá đã bao gồm topping/size nếu có)
-      // 2. Nếu totalPrice lỗi/bằng 0, fallback về công thức: giá gốc * số lượng
       const itemTotal = item.totalPrice ? item.totalPrice : ((item.price || 0) * (item.quantity || 1));
-      
       return sum + itemTotal;
     }, 0);
   };
+
+  // 👇 ĐÃ BỔ SUNG loadCartData VÀO RETURN
   return {
     cartItems,
     setCartItems,
@@ -190,6 +196,7 @@ const useCart = (url, token) => {
     mergeGuestCart,
     getTotalCartAmount,
     clearCart,
+    loadCartData, // ✅ Đã thêm
   };
 };
 

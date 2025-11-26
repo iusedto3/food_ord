@@ -1,0 +1,102 @@
+.track-order-container {
+    min-height: 80vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f9f9f9;
+    padding: 20px;
+}
+
+.track-box {
+    background: white;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    width: 100%;
+    max-width: 480px;
+    text-align: center;
+}
+
+.track-header {
+    margin-bottom: 30px;
+}
+
+.track-icon {
+    font-size: 48px;
+    color: tomato;
+    margin-bottom: 15px;
+}
+
+.track-header h2 {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.track-header p {
+    color: #666;
+    font-size: 14px;
+}
+
+.track-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.input-group {
+    position: relative;
+}
+
+.search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+    font-size: 18px;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 12px 12px 12px 42px;
+    /* Chừa chỗ cho icon */
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 16px;
+    outline: none;
+    transition: 0.2s;
+}
+
+.input-group input:focus {
+    border-color: tomato;
+    box-shadow: 0 0 0 2px rgba(255, 99, 71, 0.2);
+}
+
+.error-msg {
+    color: #e41d1d;
+    font-size: 13px;
+    text-align: left;
+    margin-top: -5px;
+}
+
+.track-form button {
+    background: tomato;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.track-form button:hover:not(:disabled) {
+    background: #e03e25;
+}
+
+.track-form button:disabled {
+    background: #fccac4;
+    cursor: not-allowed;
+}

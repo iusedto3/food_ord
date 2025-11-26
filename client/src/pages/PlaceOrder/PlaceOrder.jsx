@@ -15,7 +15,7 @@ const PlaceOrder = () => {
   const { voucher } = useContext(StoreContext);
   const { placeOrder, loading } = useOrder();
 
-  // --- STATE QUẢN LÝ FORM (Lifted State) ---
+  // --- STATE QUẢN LÝ FORM ---
   const [addressData, setAddressData] = useState({
     street: "",
     cityCode: "",
@@ -29,7 +29,7 @@ const PlaceOrder = () => {
     phone: "",
     email: "",
   });
-  const [paymentMethod, setPaymentMethod] = useState("cod"); // Mặc định COD hoặc ZaloPay
+  const [paymentMethod, setPaymentMethod] = useState("cod");
 
   // --- XỬ LÝ ĐẶT HÀNG ---
   const handlePlaceOrder = async () => {
@@ -39,7 +39,7 @@ const PlaceOrder = () => {
       return;
     }
 
-    // 2. Gọi API
+    // 2. Gọi API tạo đơn (thông qua custom hook useOrder)
     const response = await placeOrder({
       addressData,
       customerData,
@@ -47,16 +47,39 @@ const PlaceOrder = () => {
       voucher,
     });
 
-    // 👇👇👇 SỬA ĐOẠN NÀY 👇👇👇
+    // 3. Xử lý kết quả trả về
+    if (response && response.success) {
+      const { orderId, paymentUrl } = response;
 
-    // Nếu có link thanh toán (Stripe/Momo...), dừng hàm tại đây để trình duyệt tự chuyển hướng
-    if (response?.paymentUrl) {
-      return;
-    }
+      // ---------------------------------------------------------
+      // 🛑 A. GIẢ LẬP MOMO (Tự động thành công sau 5s)
+      // ---------------------------------------------------------
+      if (paymentMethod === "momo") {
+        alert(
+          `[MÔ PHỎNG MOMO] Hệ thống đang xử lý thanh toán... Vui lòng đợi 5 giây.`
+        );
 
-    // Chỉ điều hướng sang trang Success nếu là COD (không có paymentUrl)
-    if (response?.orderId) {
-      navigate(`/success/${response.orderId}`);
+        setTimeout(() => {
+          // Tự động điều hướng kèm resultCode=0 (Giả lập MoMo trả về thành công)
+          navigate(`/verify?orderId=${orderId}&resultCode=0`);
+        }, 5000);
+        return; // Dừng hàm, không làm gì thêm
+      }
+
+      // ---------------------------------------------------------
+      // 🛑 B. THANH TOÁN ONLINE KHÁC (ZaloPay, Stripe...)
+      // ---------------------------------------------------------
+      if (paymentUrl) {
+        // Chuyển hướng người dùng sang trang thanh toán thật
+        window.location.replace(paymentUrl);
+        return;
+      }
+
+      // ---------------------------------------------------------
+      // 🛑 C. THANH TOÁN COD (Tiền mặt)
+      // ---------------------------------------------------------
+      // Chuyển qua trang Verify để đảm bảo Frontend xóa giỏ hàng đồng bộ
+      navigate(`/verify?orderId=${orderId}&status=success`);
     }
   };
 
@@ -68,13 +91,12 @@ const PlaceOrder = () => {
           <FiArrowLeft /> Trở lại
         </button>
         <h2 className="page-title">Thanh toán</h2>
-        <div style={{ width: "80px" }}></div> {/* Spacer */}
+        <div style={{ width: "80px" }}></div>
       </div>
 
       <div className="placeorder-layout">
         {/* === CỘT TRÁI: FORM NHẬP LIỆU === */}
         <div className="layout-left">
-          {/* Truyền state và hàm set xuống InfoPayment */}
           <InfoPayment
             addressData={addressData}
             setAddressData={setAddressData}
