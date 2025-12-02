@@ -21,72 +21,80 @@ export const addFood = async (req, res) => {
 
     const image_filename = req.file?.filename || "";
 
+    // 🟢 PARSE DỮ LIỆU JSON
+    // Vì FormData gửi lên là string, cần parse ra Object/Array
+    let parsedSizes = { S: 0, M: 0, L: 0 };
+    if (sizes) {
+        try { parsedSizes = JSON.parse(sizes); } catch (e) { console.log(e); }
+    }
+
+    let parsedOptions = [];
+    if (options) {
+        try { parsedOptions = JSON.parse(options); } catch (e) { console.log(e); }
+    }
+
+    let parsedCrustList = [];
+    if (crustList) {
+        try { parsedCrustList = JSON.parse(crustList); } catch (e) { console.log(e); }
+    }
+
     const food = new foodModel({
       name,
       description,
-      price,
+      price: Number(price),
       category,
       image: image_filename,
 
-      sizes: sizes ? JSON.parse(sizes) : [],
-      options: options ? JSON.parse(options) : [],
+      // Lưu object size { S, M, L }
+      sizes: parsedSizes,
+      
+      // Lưu mảng topping
+      options: parsedOptions,
 
+      // Lưu cấu hình đế bánh
       crust: {
         enabled: crustEnabled === "true" || crustEnabled === true,
-        list: crustList ? JSON.parse(crustList) : [],
+        list: parsedCrustList,
       },
+      
+      available: true
     });
 
     await food.save();
     res.json({ success: true, message: "Thêm món thành công!", data: food });
   } catch (error) {
     console.error("Add food error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Lỗi server khi thêm món!",
-    });
+    res.status(500).json({ success: false, message: "Lỗi server khi thêm món!" });
   }
 };
 
 /* ---------------------------------------------
-   LIST FOOD (GET)
+   LIST FOOD (GET - Pagination & Filter)
 --------------------------------------------- */
-// GET /api/food/list?page=1&limit=10&search=&category=&sort=price_asc
 export const listFood = async (req, res) => {
   try {
-    let {
-      page = 1,
-      limit = 10,
-      search = "",
-      category = "",
-      sort = "",
-    } = req.query;
+    let { page = 1, limit = 100, search = "", category = "", sort = "" } = req.query; // Tăng limit mặc định lên để dễ test
 
     page = Number(page);
     limit = Number(limit);
 
     const query = {};
 
-    // Search theo tên
     if (search) {
       query.name = { $regex: search, $options: "i" };
     }
 
-    // Lọc theo danh mục
-    if (category) {
+    if (category && category !== "All") { // Thêm check "All"
       query.category = category;
     }
 
-    // Tính tổng
     const total = await foodModel.countDocuments(query);
 
-    // Sort
     let sortOption = {};
-
     if (sort === "price_asc") sortOption.price = 1;
     else if (sort === "price_desc") sortOption.price = -1;
+    else sortOption.createdAt = -1; // Mặc định mới nhất lên đầu
 
-    // Lấy dữ liệu trang hiện tại
     const foods = await foodModel
       .find(query)
       .sort(sortOption)
@@ -105,9 +113,7 @@ export const listFood = async (req, res) => {
     });
   } catch (error) {
     console.error("List Food Error:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Server error", error: error.message });
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
@@ -117,18 +123,16 @@ export const listFood = async (req, res) => {
 export const removeFood = async (req, res) => {
   try {
     const { id } = req.params;
-
-    if (!id) {
-      return res.status(400).json({ success: false, message: "Missing food ID" });
+    const food = await foodModel.findById(id);
+    
+    if (food && food.image) {
+       // Xóa ảnh cũ
+       const oldImgPath = path.join(process.cwd(), "uploads", food.image);
+       fs.unlink(oldImgPath, () => {});
     }
 
-    const deleted = await foodModel.findByIdAndDelete(id);
-
-    if (!deleted) {
-      return res.status(404).json({ success: false, message: "Food not found" });
-    }
-
-    res.json({ success: true, message: "Food deleted successfully" });
+    await foodModel.findByIdAndDelete(id);
+    res.json({ success: true, message: "Đã xóa món ăn" });
   } catch (err) {
     console.error("Delete error:", err);
     res.status(500).json({ success: false, message: "Server error" });
@@ -141,128 +145,82 @@ export const removeFood = async (req, res) => {
 export const updateFood = async (req, res) => {
   try {
     const { id } = req.params;
-
     const food = await foodModel.findById(id);
+    
     if (!food) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Food không tồn tại!" });
+      return res.status(404).json({ success: false, message: "Món không tồn tại!" });
     }
 
-    // Nếu upload ảnh mới thì xoá ảnh cũ
+    // Xử lý ảnh mới
     if (req.file?.filename) {
       const oldImgPath = path.join(process.cwd(), "uploads", food.image);
-      fs.unlink(oldImgPath, () => {});
+      fs.unlink(oldImgPath, (err) => {}); // Xóa ảnh cũ
       food.image = req.file.filename;
     }
 
-    // UPDATE basic info
-    food.name = req.body.name ?? food.name;
-    food.description = req.body.description ?? food.description;
-    food.price = req.body.price ?? food.price;
-    food.category = req.body.category ?? food.category;
+    // Cập nhật thông tin cơ bản
+    food.name = req.body.name || food.name;
+    food.description = req.body.description || food.description;
+    food.price = Number(req.body.price) || food.price;
+    food.category = req.body.category || food.category;
 
-    // Sizes
+    // Cập nhật Sizes (Parse JSON)
     if (req.body.sizes) {
-      food.sizes = JSON.parse(req.body.sizes);
+        try { food.sizes = JSON.parse(req.body.sizes); } catch(e) {}
     }
 
-    // Options (toppings)
+    // Cập nhật Options
     if (req.body.options) {
-      food.options = JSON.parse(req.body.options);
+        try { food.options = JSON.parse(req.body.options); } catch(e) {}
     }
 
-    // Crust
-    if (typeof req.body.crustEnabled !== "undefined") {
-      food.crust.enabled =
-        req.body.crustEnabled === "true" || req.body.crustEnabled === true;
+    // Cập nhật Crust
+    if (req.body.crustEnabled !== undefined) {
+       food.crust.enabled = req.body.crustEnabled === "true" || req.body.crustEnabled === true;
     }
-
     if (req.body.crustList) {
-      food.crust.list = JSON.parse(req.body.crustList);
-    }
-
-    // Available status
-    if (typeof req.body.available !== "undefined") {
-      food.available =
-        req.body.available === "true" || req.body.available === true;
+        try { food.crust.list = JSON.parse(req.body.crustList); } catch(e) {}
     }
 
     await food.save();
 
-    res.json({
-      success: true,
-      message: "Cập nhật món thành công!",
-      data: food,
-    });
+    res.json({ success: true, message: "Cập nhật thành công!", data: food });
   } catch (error) {
     console.error("Update food error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Lỗi server khi cập nhật món!",
-    });
+    res.status(500).json({ success: false, message: "Lỗi server khi cập nhật!" });
   }
 };
 
 /* ---------------------------------------------
-   LIST CATEGORIES
+   GET HELPERS
 --------------------------------------------- */
 export const listCategories = async (req, res) => {
   try {
     const foods = await foodModel.find({}, "category");
     const categories = [...new Set(foods.map((f) => f.category))];
-
     res.json({ success: true, data: categories });
   } catch (error) {
-    console.error("List categories error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Lỗi khi lấy danh mục!",
-    });
+    res.status(500).json({ success: false, message: "Error" });
   }
 };
 
-/* ---------------------------------------------
-   GET FOOD BY CATEGORY
---------------------------------------------- */
 export const getFoodByCategory = async (req, res) => {
   try {
     const { name } = req.params;
-
     const foods = await foodModel.find({ category: name });
-    if (!foods.length) {
-      return res.json({
-        success: false,
-        message: "Không có món nào trong danh mục này",
-      });
-    }
-
     res.json({ success: true, data: foods });
   } catch (error) {
-    console.error("Get food by category error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Lỗi khi lấy món theo danh mục!",
-    });
+    res.status(500).json({ success: false, message: "Error" });
   }
 };
 
-
-/* ---------------------------------------------
-   GET SINGLE FOOD BY ID (MỚI)
---------------------------------------------- */
 export const getFoodById = async (req, res) => {
   try {
     const { id } = req.params;
     const food = await foodModel.findById(id);
-    
-    if (!food) {
-      return res.json({ success: false, message: "Không tìm thấy món ăn" });
-    }
-
+    if (!food) return res.json({ success: false, message: "Not found" });
     res.json({ success: true, data: food });
   } catch (error) {
-    console.error("Get Food ID Error:", error);
-    res.status(500).json({ success: false, message: "Lỗi server" });
+    res.status(500).json({ success: false, message: "Error" });
   }
 };

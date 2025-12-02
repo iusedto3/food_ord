@@ -37,7 +37,10 @@ const CartItem = ({ item, index, backendUrl, onEdit, onRemove }) => {
             <div className="cart-item-qty-price">
               <span className="cart-item-quantity">x{item.quantity}</span>
               <span className="cart-item-price">
-                {formatVND(item.totalPrice ?? item.price * item.quantity)}
+                {/* Nếu có totalPrice (đã tính topping/đế) thì dùng nó, nếu không thì dùng giá gốc * số lượng */}
+                {formatVND(
+                  item.totalPrice ? item.totalPrice : item.price * item.quantity
+                )}
               </span>
             </div>
 

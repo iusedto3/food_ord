@@ -1,7 +1,6 @@
-import React from "react";
+import React, { useContext } from "react";
 import "./FoodPopup.css";
 import useFoodPopup from "../../hooks/useFoodPopup";
-import { useContext } from "react";
 import { StoreContext } from "../../contexts/StoreContext";
 
 const FoodPopup = ({ isOpen, food, mode, itemIndex, onConfirm, onClose }) => {
@@ -25,13 +24,19 @@ const FoodPopup = ({ isOpen, food, mode, itemIndex, onConfirm, onClose }) => {
 
   if (!food) return null;
 
+  const sizeMapping = { S: "Nhỏ", M: "Vừa", L: "Lớn" };
+  const sizeKeys = ["S", "M", "L"];
+
+  // 🟢 LOGIC MỚI: Chỉ hiện size nếu S hoặc L có giá trị > 0
+  // Nếu S=0 và L=0 thì coi như món này chỉ có 1 size duy nhất (M) -> Ẩn chọn size
+  const hasMultipleSizes = food.sizes && (food.sizes.S > 0 || food.sizes.L > 0);
+
   return (
     <div className="food-popup-overlay" onClick={onClose}>
       <div
         className="food-popup-content"
         onClick={(e) => e.stopPropagation()}
         ref={popupRef}
-        tabIndex={-1}
       >
         <button className="food-popup-close" onClick={onClose}>
           &times;
@@ -49,52 +54,66 @@ const FoodPopup = ({ isOpen, food, mode, itemIndex, onConfirm, onClose }) => {
           <h3 className="food-popup-title">{food.name}</h3>
           <p className="food-popup-desc">{food.description}</p>
 
-          {food.sizes?.length > 0 && (
+          {/* 🟢 1. CHỈ HIỆN SIZE NẾU CÓ NHIỀU SIZE */}
+          {hasMultipleSizes && (
             <div className="food-popup-section">
               <div className="food-popup-label">Kích thước</div>
               <div className="food-popup-sizes">
-                {food.sizes.map((s, i) => (
-                  <button
-                    key={i}
-                    className={`food-popup-size-btn ${
-                      selectedSize === s ? "active" : ""
-                    }`}
-                    onClick={() => setSelectedSize(s)}
-                  >
-                    {s}
-                  </button>
-                ))}
+                {sizeKeys.map((key) => {
+                  // Nếu size đó giá = 0 thì không hiện nút (hoặc disable)
+                  if (food.sizes[key] === 0 && key !== "M") return null;
+
+                  const label = sizeMapping[key];
+                  return (
+                    <button
+                      key={key}
+                      className={`food-popup-size-btn ${
+                        selectedSize === label ? "active" : ""
+                      }`}
+                      onClick={() => setSelectedSize(label)}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
               </div>
-              {/* ==== CRUST (RADIO BUTTONS) ==== */}
-              {food.crust?.enabled && food.crust.list?.length > 0 && (
-                <div className="food-popup-section">
-                  <div className="food-popup-label">Đế bánh (Crust)</div>
-
-                  <div className="food-popup-crust-options">
-                    {food.crust.list.map((c, i) => (
-                      <label key={i} className="food-popup-crust-item">
-                        <input
-                          type="radio"
-                          name="crust"
-                          checked={selectedCrust?.label === c.label}
-                          onChange={() => setSelectedCrust(c)}
-                        />
-
-                        <span className="crust-name">{c.label}</span>
-
-                        {c.price > 0 && (
-                          <span className="crust-price">
-                            +{c.price.toLocaleString()}đ
-                          </span>
-                        )}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
+          {/* 🟢 2. ĐẾ BÁNH (Giữ nguyên logic kiểm tra enabled) */}
+          {food.crust?.enabled && food.crust.list?.length > 0 && (
+            <div className="food-popup-section">
+              <div className="food-popup-label">Đế bánh (Crust)</div>
+              <div className="food-popup-crust-options">
+                {food.crust.list.map((c, i) => {
+                  const currentSizeKey =
+                    Object.keys(sizeMapping).find(
+                      (key) => sizeMapping[key] === selectedSize
+                    ) || "M";
+                  const crustPrice = c.prices ? c.prices[currentSizeKey] : 0;
+
+                  return (
+                    <label key={i} className="food-popup-crust-item">
+                      <input
+                        type="radio"
+                        name="crust"
+                        checked={selectedCrust?.label === c.label}
+                        onChange={() => setSelectedCrust(c)}
+                      />
+                      <span className="crust-name">{c.label}</span>
+                      {crustPrice > 0 && (
+                        <span className="crust-price">
+                          +{Number(crustPrice).toLocaleString()}đ
+                        </span>
+                      )}
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ... Phần Topping, Note, Button giữ nguyên ... */}
           {food.options?.length > 0 && (
             <div className="food-popup-section">
               <div className="food-popup-label">Tuỳ chọn thêm</div>
@@ -115,9 +134,7 @@ const FoodPopup = ({ isOpen, food, mode, itemIndex, onConfirm, onClose }) => {
                       )}
                       onChange={() => toggleTopping(opt)}
                     />
-
                     <span>{opt.label}</span>
-
                     {opt.price > 0 && (
                       <span className="option-price">
                         {opt.price.toLocaleString()} đ
@@ -135,7 +152,7 @@ const FoodPopup = ({ isOpen, food, mode, itemIndex, onConfirm, onClose }) => {
               className="food-popup-note"
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="Ví dụ: không hành, ít cay..."
+              placeholder="Ví dụ: không hành..."
             />
           </div>
 
@@ -157,7 +174,6 @@ const FoodPopup = ({ isOpen, food, mode, itemIndex, onConfirm, onClose }) => {
                 </button>
               </div>
             </div>
-
             <button className="food-popup-order-btn" onClick={handleConfirm}>
               {mode === "edit" ? "Cập nhật" : "Thêm vào giỏ hàng"} •{" "}
               {totalPrice.toLocaleString("vi-VN")} đ
