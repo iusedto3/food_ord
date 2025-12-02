@@ -21,7 +21,27 @@ const Promotion = ({ url }) => {
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // 📥 Lấy danh sách khuyến mãi từ server
+  // Helper chuyển đổi ngày từ UTC sang YYYY-MM-DD (cho input date)
+  const formatDateForInput = (isoString) => {
+    if (!isoString) return "";
+    const date = new Date(isoString);
+    // Lấy ngày local để tránh bị lùi 1 ngày do múi giờ
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const dd = String(date.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  // Helper hiển thị ngày Việt Nam (dd/mm/yyyy)
+  const formatDateVN = (isoString) => {
+    if (!isoString) return "";
+    return new Date(isoString).toLocaleDateString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  };
+
   const fetchPromos = async () => {
     try {
       setLoading(true);
@@ -32,8 +52,7 @@ const Promotion = ({ url }) => {
       setPromos(data);
     } catch (err) {
       console.error("Error fetching promos:", err);
-      toast.error("Không thể tải danh sách khuyến mãi!");
-      setPromos([]);
+      toast.error("Lỗi kết nối server!");
     } finally {
       setLoading(false);
     }
@@ -43,13 +62,11 @@ const Promotion = ({ url }) => {
     fetchPromos();
   }, []);
 
-  // 🔄 Reset form
   const resetForm = () => {
     setForm(initialFormState);
     setEditingId(null);
   };
 
-  // 💾 Thêm hoặc cập nhật khuyến mãi
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -63,18 +80,16 @@ const Promotion = ({ url }) => {
     if (new Date(form.startDate) > new Date(form.endDate))
       return toast.error("Ngày bắt đầu phải trước ngày kết thúc!");
 
-    // 🔥 FIX LỖI 400: ép kiểu đúng format backend yêu cầu
     const payload = {
       ...form,
       value: Number(form.value),
       minOrderAmount: Number(form.minOrderAmount || 0),
-      startDate: new Date(form.startDate),
-      endDate: new Date(form.endDate),
+      startDate: new Date(form.startDate), // Backend sẽ lưu giờ 00:00:00
+      endDate: new Date(form.endDate), // Backend sẽ lưu giờ 00:00:00
     };
 
     try {
       setLoading(true);
-
       if (editingId) {
         await axios.put(`${apiUrl}/${editingId}`, payload);
         toast.success("Đã cập nhật khuyến mãi!");
@@ -82,18 +97,16 @@ const Promotion = ({ url }) => {
         await axios.post(apiUrl, payload);
         toast.success("Đã thêm khuyến mãi mới!");
       }
-
       resetForm();
       fetchPromos();
     } catch (err) {
       console.error("Error saving promo:", err);
-      toast.error(err.response?.data?.message || "Lỗi khi lưu khuyến mãi!");
+      toast.error(err.response?.data?.message || "Lỗi khi lưu!");
     } finally {
       setLoading(false);
     }
   };
 
-  // ✏️ Sửa khuyến mãi
   const handleEdit = (promo) => {
     setForm({
       type: promo.type,
@@ -101,29 +114,28 @@ const Promotion = ({ url }) => {
       code: promo.code || "",
       description: promo.description || "",
       minOrderAmount: promo.minOrderAmount || "",
-      startDate: promo.startDate?.split("T")[0] || "",
-      endDate: promo.endDate?.split("T")[0] || "",
+      // Sử dụng helper để format ngày chuẩn cho input
+      startDate: formatDateForInput(promo.startDate),
+      endDate: formatDateForInput(promo.endDate),
     });
     setEditingId(promo._id);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // 🗑️ Xóa khuyến mãi
   const handleDelete = async (id) => {
-    if (!window.confirm("Bạn có chắc muốn xóa khuyến mãi này?")) return;
+    if (!window.confirm("Bạn có chắc muốn xóa?")) return;
     try {
       setLoading(true);
       await axios.delete(`${apiUrl}/${id}`);
       toast.success("Đã xóa khuyến mãi!");
       fetchPromos();
     } catch {
-      toast.error("Không thể xóa khuyến mãi!");
+      toast.error("Lỗi khi xóa!");
     } finally {
       setLoading(false);
     }
   };
 
-  // 🔛 Bật/tắt khuyến mãi
   const toggleActive = async (id, current) => {
     try {
       setLoading(true);
@@ -131,13 +143,12 @@ const Promotion = ({ url }) => {
       toast.info(`Đã ${!current ? "bật" : "tắt"} khuyến mãi`);
       fetchPromos();
     } catch {
-      toast.error("Lỗi khi thay đổi trạng thái!");
+      toast.error("Lỗi server!");
     } finally {
       setLoading(false);
     }
   };
 
-  // 💬 Format dữ liệu hiển thị
   const formatValue = (promo) =>
     promo.type === "percentage"
       ? `${promo.value}%`
@@ -150,13 +161,11 @@ const Promotion = ({ url }) => {
       coupon: "Mã giảm giá",
     }[type] || type);
 
-  // 🧱 Giao diện chia 2 cột
   return (
     <div className="promotion-container">
-      {/* --- Cột trái: Form quản lý --- */}
+      {/* CỘT TRÁI */}
       <div className="promotion-left">
         <h2 className="promotion-title">Quản lý khuyến mãi</h2>
-
         <form className="promotion-form" onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Loại khuyến mãi</label>
@@ -201,14 +210,14 @@ const Promotion = ({ url }) => {
           )}
 
           <div className="form-group">
-            <label>Giá trị đơn hàng tối thiểu (₫)</label>
+            <label>Đơn tối thiểu (₫)</label>
             <input
               type="number"
               value={form.minOrderAmount}
               onChange={(e) =>
                 setForm({ ...form, minOrderAmount: e.target.value })
               }
-              placeholder="VD: 100000 (để trống nếu không yêu cầu)"
+              placeholder="VD: 100000"
               min="0"
               disabled={loading}
             />
@@ -247,7 +256,7 @@ const Promotion = ({ url }) => {
               onChange={(e) =>
                 setForm({ ...form, description: e.target.value })
               }
-              placeholder="Mô tả chi tiết chương trình"
+              placeholder="Mô tả..."
               disabled={loading}
             />
           </div>
@@ -270,14 +279,15 @@ const Promotion = ({ url }) => {
         </form>
       </div>
 
-      {/* --- Cột phải: Danh sách khuyến mãi --- */}
+      {/* CỘT PHẢI */}
       <div className="promotion-right">
         <div className="promo-list">
-          <h3>Danh sách khuyến mãi ({promos.length})</h3>
+          <h3>Danh sách ({promos.length})</h3>
           {loading && <p className="loading">Đang tải...</p>}
           {!loading && promos.length === 0 && (
-            <p className="empty">Chưa có khuyến mãi nào.</p>
+            <p className="empty">Chưa có dữ liệu.</p>
           )}
+
           {!loading &&
             promos.map((p) => (
               <div
@@ -285,13 +295,14 @@ const Promotion = ({ url }) => {
                 className={`promo-card ${p.isActive ? "" : "inactive"}`}
               >
                 <div className="promo-header">
-                  <h4>{p.description || "Không có mô tả"}</h4>
+                  <h4>{p.description || "Không tiêu đề"}</h4>
                   <span
                     className={p.isActive ? "badge-active" : "badge-inactive"}
                   >
                     {p.isActive ? "Hoạt động" : "Tạm dừng"}
                   </span>
                 </div>
+
                 <div className="promo-details">
                   <p>
                     <strong>Loại:</strong> {getTypeLabel(p.type)}
@@ -310,12 +321,14 @@ const Promotion = ({ url }) => {
                       {Number(p.minOrderAmount).toLocaleString("vi-VN")}₫
                     </p>
                   )}
+
+                  {/* 🟢 HIỂN THỊ NGÀY FORMAT VIỆT NAM */}
                   <p>
-                    <strong>Thời gian:</strong>{" "}
-                    {new Date(p.startDate).toLocaleDateString("vi-VN")} -{" "}
-                    {new Date(p.endDate).toLocaleDateString("vi-VN")}
+                    <strong>Thời gian:</strong> {formatDateVN(p.startDate)} -{" "}
+                    {formatDateVN(p.endDate)}
                   </p>
                 </div>
+
                 <div className="promo-actions">
                   <button
                     className="btn-edit"

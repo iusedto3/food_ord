@@ -29,7 +29,7 @@ const AdminOrderList = () => {
       const res = await fetch("http://localhost:4000/api/order/admin/orders");
       const data = await res.json();
       if (data.success) {
-        setOrders(data.orders.reverse());
+        setOrders(data.orders);
         setFilteredOrders(data.orders);
       }
     } catch (error) {

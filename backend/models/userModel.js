@@ -27,11 +27,22 @@ const userSchema = new mongoose.Schema(
     addressList: [
       {
         id: { type: String },
-        label: { type: String },
+        label: { type: String }, // Nhà riêng, Công ty...
+        
+        // 🟢 THÊM THÔNG TIN NGƯỜI NHẬN
+        name: { type: String }, 
+        phone: { type: String },
+
         street: { type: String },
         ward: { type: String },
         district: { type: String },
         city: { type: String },
+        
+        // Lưu cả mã hành chính để map lại select box
+        wardCode: { type: Number },
+        districtCode: { type: Number },
+        cityCode: { type: Number },
+
         isDefault: { type: Boolean, default: false }
       }, 
     ],

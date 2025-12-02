@@ -11,6 +11,10 @@ const InfoPayment = ({
   setCustomerData,
   paymentMethod,
   setPaymentMethod,
+  savedAddresses,
+  saveAddress,
+  setSaveAddress,
+  isLoggedIn,
 }) => {
   return (
     <div className="info-payment-wrapper">
@@ -18,6 +22,11 @@ const InfoPayment = ({
       <DeliveryAddress
         addressData={addressData}
         setAddressData={setAddressData}
+        savedAddresses={savedAddresses} // Truyền tiếp
+        setSavedAddresses={() => {}} // (Optional nếu muốn update list realtime)
+        saveAddress={saveAddress}
+        setSaveAddress={setSaveAddress}
+        isLoggedIn={isLoggedIn}
       />
 
       {/* 2. KHỐI NGƯỜI ĐẶT HÀNG */}
