@@ -4,16 +4,20 @@ const foodSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     description: { type: String, default: "" },
-    price: { type: Number, required: true },
-    category: { type: String, default: "other" }, // pizza, drink, etc.
-
-    // Image
+    price: { type: Number, required: true }, // Giá gốc (Size M)
+    category: { type: String, default: "other" },
     image: { type: String, default: "" },
 
-    // Sizes dành cho món có size
-    sizes: [String],
+    // 🔴 SỬA ĐOẠN NÀY (QUAN TRỌNG)
+    // Cũ: sizes: [String]  <-- XÓA DÒNG NÀY
+    // Mới: sizes là Object chứa giá tiền
+    sizes: {
+        S: { type: Number, default: 0 },
+        M: { type: Number, default: 0 },
+        L: { type: Number, default: 0 }
+    },
 
-    // Toppings / Options
+    // Toppings
     options: [
       {
         label: String,
@@ -21,24 +25,26 @@ const foodSchema = new mongoose.Schema(
       },
     ],
 
-    // NEW: Crust dành riêng cho Pizza
+    // 🔴 SỬA CẢ ĐOẠN NÀY (Đế bánh)
     crust: {
-      enabled: { type: Boolean, default: false }, // true nếu sản phẩm có crust
+      enabled: { type: Boolean, default: false },
       list: [
         {
-          label: String,
-          price: Number,
+          label: { type: String, required: true },
+          // Giá riêng cho từng size
+          prices: { 
+              S: { type: Number, default: 0 },
+              M: { type: Number, default: 0 },
+              L: { type: Number, default: 0 }
+          }
         },
       ],
     },
 
-    // trạng thái bán
     available: { type: Boolean, default: true },
   },
   { timestamps: true }
 );
 
-const foodModel =
-  mongoose.models.food || mongoose.model("food", foodSchema);
-
+const foodModel = mongoose.models.food || mongoose.model("food", foodSchema);
 export default foodModel;

@@ -20,12 +20,18 @@ const CartItems = () => {
       return;
     }
 
-    // Gộp món gốc với item trong giỏ (giữ size/topping/note)
+    // 🟢 SỬA LOGIC MERGE:
+    // 1. Lấy toàn bộ cấu hình gốc (để có danh sách size, crust, topping)
+    // 2. Gán các lựa chọn của user vào các biến riêng (user_...)
     const merged = {
-      ...original,
-      ...item,
-      sizes: original.sizes || [], // danh sách size gốc
-      options: original.options || [], // danh sách topping gốc
+      ...original, // Lấy sizes{S,M,L}, crust{list}, options[...] từ gốc
+
+      // Lưu lại những gì user đã chọn trong giỏ
+      user_quantity: item.quantity,
+      user_note: item.note,
+      user_size: item.size, // VD: "Vừa"
+      user_crust: item.crust, // VD: { label: "Viền phô mai", ... }
+      user_toppings: item.toppings,
     };
 
     setEditingItem(merged);

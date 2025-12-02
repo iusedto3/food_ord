@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
-import { calculateItemPrice } from "../utils/pricing";
+// import { calculateItemPrice } from "../utils/pricing"; // ❌ BỎ DÒNG NÀY (Không dùng logic cũ nữa)
 
 const useCart = (url, token) => {
   const [cartItems, setCartItems] = useState([]);
@@ -12,7 +12,7 @@ const useCart = (url, token) => {
     return t ? { Authorization: `Bearer ${t}` } : {};
   };
 
-  // Lưu giỏ hàng guest (chưa đăng nhập)
+  // Lưu giỏ hàng guest
   const saveGuestCart = (list) => {
     try {
       localStorage.setItem("guestCart", JSON.stringify(list));
@@ -21,7 +21,7 @@ const useCart = (url, token) => {
     }
   };
 
-  // Khi chưa đăng nhập → load giỏ hàng guest
+  // Load giỏ hàng guest khi chưa login
   useEffect(() => {
     if (!token) {
       const saved = JSON.parse(localStorage.getItem("guestCart")) || [];
@@ -29,56 +29,61 @@ const useCart = (url, token) => {
     }
   }, [token]);
 
-  // ========== LOAD CART DATA (Cập nhật tên hàm để khớp với Context) ==========
+  // Load giỏ hàng User
   const loadCartData = useCallback(async (specificToken) => {
     try {
-      // Ưu tiên token truyền vào -> token props -> localStorage
       const t = specificToken || token || localStorage.getItem("token");
       const headers = t ? { Authorization: `Bearer ${t}` } : {};
-
       const res = await api.post("/api/cart/get", {}, { headers });
-      
       if (res.data.success) {
           setCartItems(res.data.cartData || []);
       }
     } catch (err) {
-      console.error("loadCartData error:", err?.response?.data || err.message);
+      console.error("loadCartData error:", err);
     }
-  }, [token]); // Dependency
+  }, [token]);
 
-  // Tự động load cart khi F5 hoặc Token thay đổi
   useEffect(() => {
     const savedToken = localStorage.getItem("token");
-    if (savedToken) {
-      loadCartData();
-    }
+    if (savedToken) loadCartData();
   }, [token, loadCartData]);
 
-  // ========== ADD TO CART ==========
+  // ============================================================
+  // 🟢 ADD TO CART (SỬA LOGIC GUEST ĐỂ KHỚP VỚI USER)
+  // ============================================================
   const addToCart = async (foodData) => {
     try {
       const t = token || localStorage.getItem("token");
 
-      // Guest mode
+      // ---------------- GUEST MODE ----------------
       if (!t) {
         const updated = [...cartItems];
 
+        // Tìm món trùng
         const existing = updated.find(
           (item) =>
             item._id === foodData._id &&
             item.size === foodData.size &&
+            // So sánh Crust & Topping chuẩn xác hơn
             JSON.stringify(item.crust) === JSON.stringify(foodData.crust) &&
             JSON.stringify(item.toppings) === JSON.stringify(foodData.toppings) &&
             item.note === foodData.note
         );
 
         if (existing) {
+          // CỘNG DỒN SỐ LƯỢNG
           existing.quantity += foodData.quantity;
-          existing.totalPrice = calculateItemPrice(existing) * existing.quantity;
+          
+          // 🟢 FIX LỖI GIÁ: Cộng dồn totalPrice từ dữ liệu mới gửi vào
+          // (Vì foodData.totalPrice đã được tính đúng ở FoodPopup)
+          existing.totalPrice = Number(existing.totalPrice) + Number(foodData.totalPrice);
+          
         } else {
+          // THÊM MỚI
           updated.push({
             ...foodData,
-            totalPrice: calculateItemPrice(foodData) * foodData.quantity,
+            // Đảm bảo lưu đúng giá tổng mà FoodPopup gửi sang
+            totalPrice: Number(foodData.totalPrice), 
           });
         }
 
@@ -87,36 +92,40 @@ const useCart = (url, token) => {
         return;
       }
 
-      // User mode
+      // ---------------- USER MODE ----------------
+      // Gửi foodData (đã bao gồm totalPrice đúng) lên Server
       const res = await api.post("/api/cart/add", foodData, {
         headers: getAuthHeader(),
       });
       if (res.data.success) setCartItems(res.data.cartData || []);
+
     } catch (err) {
       console.error("addToCart error:", err?.response?.data || err.message);
     }
   };
 
   // ========== REMOVE ==========
-  const removeFromCart = async (itemId) => {
+  const removeFromCart = async (itemIndex) => {
     try {
       const t = token || localStorage.getItem("token");
 
+      // Guest: Xóa theo index
       if (!t) {
-        const updated = cartItems.filter((_, idx) => idx !== itemId);
+        const updated = cartItems.filter((_, idx) => idx !== itemIndex);
         setCartItems(updated);
         saveGuestCart(updated);
         return;
       }
 
+      // User
       const res = await api.post(
         "/api/cart/remove",
-        { itemId },
+        { itemIndex }, 
         { headers: getAuthHeader() }
       );
       if (res.data.success) setCartItems(res.data.cartData || []);
     } catch (err) {
-      console.error("removeFromCart error:", err?.response?.data || err.message);
+      console.error("removeFromCart error:", err);
     }
   };
 
@@ -125,17 +134,16 @@ const useCart = (url, token) => {
     try {
       const t = token || localStorage.getItem("token");
 
+      // Guest
       if (!t) {
         const newList = [...cartItems];
-        newList[index] = {
-          ...updatedItem,
-          totalPrice: calculateItemPrice(updatedItem) * updatedItem.quantity,
-        };
+        newList[index] = updatedItem; // updatedItem đã có totalPrice mới từ Popup
         setCartItems(newList);
         saveGuestCart(newList);
         return;
       }
 
+      // User
       const res = await api.put(
         "/api/cart/update",
         { index, updatedItem },
@@ -143,50 +151,39 @@ const useCart = (url, token) => {
       );
       if (res.data.success) setCartItems(res.data.cartData || []);
     } catch (err) {
-      console.error("updateCartItem error:", err?.response?.data || err.message);
+      console.error("updateCartItem error:", err);
     }
   };
 
-  // ========== MERGE ==========
+  // ... (Merge, Clear giữ nguyên) ...
   const mergeGuestCart = async () => {
     const t = token || localStorage.getItem("token");
     if (!t) return;
-
     const guest = JSON.parse(localStorage.getItem("guestCart")) || [];
     if (!guest.length) return;
-
     try {
-      const res = await api.post(
-        "/api/cart/merge",
-        { items: guest },
-        { headers: getAuthHeader() }
-      );
-
+      const res = await api.post("/api/cart/sync", { items: guest }, { headers: getAuthHeader() });
       if (res.data.success) {
         setCartItems(res.data.cartData || []);
         localStorage.removeItem("guestCart");
       }
-    } catch (err) {
-      console.error("mergeGuestCart error:", err?.response?.data || err.message);
-    }
+    } catch (err) { console.error(err); }
   };
 
-  // ========== CLEAR ==========
   const clearCart = () => {
-    console.log("🧹 Đang dọn dẹp giỏ hàng...");
     setCartItems([]);
     localStorage.removeItem("guestCart");
   };
 
-  // ========== TOTAL ==========
+  // 🟢 TÍNH TỔNG TIỀN (Dựa trên totalPrice có sẵn)
   const getTotalCartAmount = () => {
     return cartItems.reduce((sum, item) => {
-      const itemTotal = item.totalPrice ? item.totalPrice : ((item.price || 0) * (item.quantity || 1));
-      return sum + itemTotal;
+      // Ưu tiên lấy totalPrice đã lưu, nếu không mới tính thủ công
+      const val = item.totalPrice ? Number(item.totalPrice) : (Number(item.price) * Number(item.quantity));
+      return sum + val;
     }, 0);
   };
 
-  // 👇 ĐÃ BỔ SUNG loadCartData VÀO RETURN
   return {
     cartItems,
     setCartItems,
@@ -196,7 +193,7 @@ const useCart = (url, token) => {
     mergeGuestCart,
     getTotalCartAmount,
     clearCart,
-    loadCartData, // ✅ Đã thêm
+    loadCartData,
   };
 };
 
