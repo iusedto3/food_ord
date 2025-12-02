@@ -44,7 +44,11 @@ const PlaceOrder = () => {
   useEffect(() => {
     if (token) {
       axios
-        .post(`${url}/api/user/addresses`, {}, { headers: { token } })
+        .post(
+          `${url}/api/user/addresses`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        )
         .then((res) => {
           if (res.data.success) {
             setSavedAddresses(res.data.list);
@@ -96,7 +100,7 @@ const PlaceOrder = () => {
         await axios.post(
           `${url}/api/user/add-address`,
           { address: newAddr },
-          { headers: { token } }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
       } catch (e) {
         console.error("Lỗi lưu địa chỉ", e);
