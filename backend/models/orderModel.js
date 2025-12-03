@@ -6,6 +6,7 @@ const orderItemSchema = new mongoose.Schema({
   name: String,
   image: { type: String, default: "" },
   size: { type: String, default: "Mặc định" },
+  crust: { type: String, default: "" },
   toppings: [{ label: String, price: Number }],
   note: { type: String, default: "" },
   quantity: { type: Number, default: 1 },

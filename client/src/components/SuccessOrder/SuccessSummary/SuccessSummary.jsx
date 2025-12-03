@@ -45,11 +45,60 @@ const SuccessSummary = ({ order }) => {
 
             {/* Thông tin món */}
             <div className="item-info">
-              <div className="item-name">{item.name}</div>
-              {/* Hiển thị chi tiết (Size, Topping...) nếu có */}
-              <div style={{ fontSize: "13px", color: "#666" }}>
-                {item.size && <span>Size: {item.size} </span>}
-                {item.quantity > 1 && <span>x{item.quantity}</span>}
+              <div className="item-name" style={{ fontWeight: "600" }}>
+                {item.name}
+              </div>
+
+              <div
+                style={{
+                  fontSize: "13px",
+                  color: "#666",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "2px",
+                }}
+              >
+                {/* Dòng 1: Size và Số lượng */}
+                <div>
+                  {item.size && (
+                    <span style={{ marginRight: "8px" }}>
+                      Size: <b>{item.size}</b>
+                    </span>
+                  )}
+                  {/* <span style={{ fontWeight: "bold" }}>x{item.quantity}</span> */}
+                </div>
+
+                {/* Dòng 2: Đế bánh (Nếu có) */}
+                {item.crust && (
+                  <div>
+                    <span>Đế: </span>
+                    <span>{item.crust}</span>
+                  </div>
+                )}
+
+                {/* Dòng 3: Toppings (Nếu có) */}
+                {item.toppings && item.toppings.length > 0 && (
+                  <div>
+                    <span>Topping: </span>
+                    <span>
+                      {/* Map qua mảng topping để lấy tên (label) và nối lại bằng dấu phẩy */}
+                      {item.toppings.map((t) => t.label).join(", ")}
+                    </span>
+                  </div>
+                )}
+
+                {/* Dòng 4: Ghi chú (Nếu có) */}
+                {item.note && (
+                  <div
+                    style={{
+                      fontStyle: "italic",
+                      color: "#888",
+                      marginTop: "2px",
+                    }}
+                  >
+                    "Note: {item.note}"
+                  </div>
+                )}
               </div>
             </div>
 

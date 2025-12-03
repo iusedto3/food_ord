@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import OrderDetailModal from "../../components/Features/OrderDetailModal/OrderDetailModal";
 import StatusBadge from "../../components/StatusBadge/StatusBadge";
 import "../../components/StatusBadge/StatusBadge.css";
+import { toast } from "react-toastify";
+import { io } from "socket.io-client";
 import {
   getProvinceName,
   getDistrictName,
@@ -39,6 +41,42 @@ const AdminOrderList = () => {
 
   useEffect(() => {
     fetchOrders();
+  }, []);
+
+  // . useEffect để lắng nghe Socket
+
+  useEffect(() => {
+    const socket = io("http://localhost:4000");
+
+    // Listener 1: Đơn mới (Đã làm)
+    socket.on("new_order", () => {
+      fetchOrders();
+    });
+
+    // 🔥 Listener 2: Thanh toán thành công (Mới thêm)
+    socket.on("payment_updated", (updatedInfo) => {
+      // Cách 1: Gọi lại API (Đơn giản nhất, code ngắn)
+      // fetchOrders();
+
+      // Cách 2: Cập nhật State (Mượt hơn, không load lại cả bảng)
+      setOrders((prev) =>
+        prev.map((o) =>
+          o._id === updatedInfo.orderId
+            ? { ...o, paymentStatus: "paid", payment: true }
+            : o
+        )
+      );
+      // Cập nhật luôn cả filteredOrders nếu đang lọc
+      setFilteredOrders((prev) =>
+        prev.map((o) =>
+          o._id === updatedInfo.orderId
+            ? { ...o, paymentStatus: "paid", payment: true }
+            : o
+        )
+      );
+    });
+
+    return () => socket.disconnect();
   }, []);
 
   // 2. Logic Lọc & Reset trang

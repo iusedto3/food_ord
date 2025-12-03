@@ -6,7 +6,6 @@ import "./Verify.css";
 
 const Verify = () => {
   const [searchParams] = useSearchParams();
-  // 👇 Lấy thêm setCartItems từ Context
   const { url, setCartItems } = useContext(StoreContext);
   const navigate = useNavigate();
 
@@ -16,13 +15,15 @@ const Verify = () => {
   const status = searchParams.get("status");
 
   useEffect(() => {
-    // 🧹 HÀM DỌN DẸP GIỎ HÀNG (Dùng chung cho cả COD và Online)
+    // 🧹 HÀM DỌN DẸP GIỎ HÀNG
     const clearFrontendCart = () => {
-      // 1. Xóa state React (để icon giỏ hàng về 0 ngay lập tức)
+      // 1. SỬA LỖI Ở ĐÂY: Phải set là Mảng rỗng [] thay vì Object {}
+      // Vì useCart đang dùng hàm .reduce() của mảng
       if (setCartItems) {
-        setCartItems({}); // Hoặc [] tùy cấu trúc state của bạn
+        setCartItems([]);
       }
-      // 2. Xóa LocalStorage (để khi F5 không bị hiện lại)
+      // 2. Xóa LocalStorage
+      localStorage.removeItem("guestCart");
       localStorage.removeItem("cartItems");
     };
 
@@ -31,12 +32,13 @@ const Verify = () => {
 
       // --- TRƯỜNG HỢP 1: COD ---
       if (status === "success") {
-        clearFrontendCart(); // ✅ Xóa giỏ
+        clearFrontendCart();
+        // ✅ Giữ nguyên hướng dẫn của bạn: Về trang Success
         navigate(`/success/${orderId}`);
         return;
       }
 
-      // --- TRƯỜNG HỢP 2: ONLINE (MOMO, ZALO...) ---
+      // --- TRƯỜNG HỢP 2: ONLINE ---
       try {
         const response = await axios.post(`${url}/api/order/verify`, {
           orderId,
@@ -46,7 +48,8 @@ const Verify = () => {
         });
 
         if (response.data.success) {
-          clearFrontendCart(); // ✅ QUAN TRỌNG: Xóa giỏ hàng khi Backend báo OK
+          clearFrontendCart();
+          // ✅ Giữ nguyên hướng dẫn của bạn: Về trang Success
           navigate(`/success/${orderId}`);
         } else {
           alert("Thanh toán thất bại hoặc đã bị hủy!");
@@ -59,7 +62,7 @@ const Verify = () => {
     };
 
     verifyPayment();
-  }, []);
+  }, [orderId, success, resultCode, status, navigate, setCartItems, url]);
 
   return (
     <div className="verify">

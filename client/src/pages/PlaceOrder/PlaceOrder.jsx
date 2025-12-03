@@ -13,7 +13,7 @@ import "./PlaceOrder.css";
 
 const PlaceOrder = () => {
   const navigate = useNavigate();
-  const { voucher, token, url } = useContext(StoreContext); // Lấy token & url
+  const { voucher, token, url, clearCart } = useContext(StoreContext); // Lấy token & url
   const { placeOrder, loading } = useOrder();
 
   // --- STATE ĐỊA CHỈ ---
@@ -117,6 +117,7 @@ const PlaceOrder = () => {
 
     // ... (Phần xử lý redirect giữ nguyên) ...
     if (response && response.success) {
+      clearCart();
       // ... code cũ ...
       const { orderId, paymentUrl } = response;
       if (paymentMethod === "momo") {
