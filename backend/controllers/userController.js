@@ -448,5 +448,47 @@ const deleteUser = async (req, res) => {
   }
 };
 
+// 1. Lấy danh sách địa chỉ
+export const getAddressList = async (req, res) => {
+  try {
+    const { userId } = req.body; // Lấy từ middleware auth
+    const user = await userModel.findById(userId);
+    if (!user) return res.json({ success: false, message: "User not found" });
+
+    res.json({ success: true, list: user.addressList || [] });
+  } catch (error) {
+    console.error(error);
+    res.json({ success: false, message: "Lỗi server" });
+  }
+};
+
+// 2. Lưu địa chỉ mới
+export const addAddress = async (req, res) => {
+  try {
+    const { userId, address } = req.body;
+    const user = await userModel.findById(userId);
+
+    // Tạo ID cho địa chỉ nếu chưa có
+    const newAddress = {
+        ...address,
+        id: address.id || Date.now().toString(), // Simple ID generation
+        isDefault: user.addressList.length === 0 // Nếu là cái đầu tiên thì set default
+    };
+
+    // Thêm vào đầu danh sách
+    user.addressList.unshift(newAddress);
+    
+    // (Tuỳ chọn) Giới hạn lưu tối đa 5 địa chỉ để DB không bị nặng
+    if (user.addressList.length > 5) user.addressList.pop();
+
+    await user.save();
+    res.json({ success: true, message: "Đã lưu địa chỉ", list: user.addressList });
+  } catch (error) {
+    console.error(error);
+    res.json({ success: false, message: "Lỗi lưu địa chỉ" });
+  }
+};
+
+
 
 export { loginUser, registerUser, checkEmail, sendResetLink, resetPassword, getUser, updateProfile, changePassword, listUsers, updateUserStatus, addUser, editUser, deleteUser };

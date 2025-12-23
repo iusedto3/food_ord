@@ -4,92 +4,111 @@ import "./OrderDetailModal.css";
 const OrderDetailModal = ({ order, onClose, refreshList }) => {
   const [status, setStatus] = useState(order.status);
 
-  // API cập nhật trạng thái
   const updateStatus = async (newStatus) => {
     setStatus(newStatus);
-
-    const res = await fetch(
-      `http://localhost:4000/api/order/admin/update-status/${order._id}`,
-      {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
+    try {
+      const res = await fetch(
+        `http://localhost:4000/api/order/admin/update-status/${order._id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: newStatus }),
+        }
+      );
+      const data = await res.json();
+      if (data.success) {
+        refreshList?.();
       }
-    );
-
-    const data = await res.json();
-    if (data.success) {
-      refreshList?.();
+    } catch (error) {
+      console.error("Lỗi cập nhật trạng thái:", error);
     }
   };
-  console.log(order);
 
   return (
     <div className="modal-backdrop">
       <div className="modal-container">
         <div className="modal-header">
-          <h3>Chi tiết đơn hàng</h3>
+          <div>
+            <h3 className="modal-title">Chi tiết đơn hàng</h3>
+            <span className="order-id">#{order.orderId}</span>
+          </div>
           <button className="close-btn" onClick={onClose}>
             &times;
           </button>
         </div>
-
-        {/* Dropdown trạng thái */}
-        <div className="status-row">
-          <b>Trạng thái đơn:</b>
+        <div className="status-section">
+          <label>Status:</label>
           <select
             className={`status-select ${status}`}
             value={status}
             onChange={(e) => updateStatus(e.target.value)}
           >
-            <option value="preparing">Đang chuẩn bị</option>
-            <option value="delivering">Đang giao</option>
-            <option value="completed">Hoàn thành</option>
-            <option value="canceled">Đã hủy</option>
+            <option value="preparing">Preparing</option>
+            <option value="delivering">Delivering</option>
+            <option value="completed">Completed</option>
+            <option value="canceled">Canceled</option>
           </select>
         </div>
 
-        {/* Danh sách món */}
         <div className="food-list">
           {order.items.map((item, i) => (
             <div className="food-item" key={i}>
-              <img
-                src={`http://localhost:4000/images/${item.image}`}
-                className="food-img"
-              />
+              <div className="food-thumb">
+                <img
+                  src={`http://localhost:4000/images/${item.image}`}
+                  onError={(e) =>
+                    (e.target.src = "https://placehold.co/80x80?text=No+Img")
+                  }
+                  alt={item.name}
+                />
+                <span className="qty-badge">x{item.quantity}</span>
+              </div>
 
               <div className="food-info">
-                <h4>{item.name}</h4>
+                <div className="food-header">
+                  <h4>{item.name}</h4>
+                  <span className="food-price">
+                    {item.totalPrice.toLocaleString()}đ
+                  </span>
+                </div>
 
-                {item.size && (
-                  <p>
-                    <b>Kích cỡ:</b> {item.size}
-                  </p>
-                )}
+                <div className="food-details">
+                  {item.size && (
+                    <p>
+                      <span>Size:</span> {item.size}
+                    </p>
+                  )}
 
-                <p>
-                  <b>Topping:</b>{" "}
-                  {item.toppings?.length > 0
-                    ? item.toppings.map((t) => `${t.label}`).join(", ")
-                    : "Không có"}
-                </p>
+                  {item.crust && (
+                    <p>
+                      <span>Đế bánh:</span> {item.crust}
+                    </p>
+                  )}
 
-                {item.note && item.note.trim() !== "" && (
-                  <p>
-                    <b>Ghi chú:</b> {item.note}
-                  </p>
-                )}
+                  {item.toppings && item.toppings.length > 0 && (
+                    <p>
+                      <span>Topping:</span>{" "}
+                      {item.toppings.map((t) => t.label).join(", ")}
+                    </p>
+                  )}
 
-                <p>
-                  <b>Số lượng:</b> {item.quantity}
-                </p>
-
-                <p>
-                  <b>Thành tiền:</b> {item.totalPrice.toLocaleString()}đ
-                </p>
+                  {item.note && (
+                    <p className="food-note">Ghi chú: "{item.note}"</p>
+                  )}
+                </div>
               </div>
             </div>
           ))}
+        </div>
+
+        {/* --- FOOTER --- */}
+        <div className="modal-footer">
+          <div className="total-row">
+            <span>Tổng cộng:</span>
+            <span className="total-price">
+              {order.amount.toLocaleString()}đ
+            </span>
+          </div>
         </div>
       </div>
     </div>

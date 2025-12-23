@@ -1,5 +1,5 @@
 import express from 'express';
-import { loginUser, registerUser, checkEmail,sendResetLink,resetPassword, verifyEmail, getUser, updateProfile, changePassword,listUsers, addUser, editUser, deleteUser, updateUserStatus } from '../controllers/userController.js';
+import { loginUser, registerUser, checkEmail,sendResetLink,resetPassword, verifyEmail, getUser, updateProfile, changePassword,listUsers, addUser, editUser, deleteUser, updateUserStatus, getAddressList, addAddress} from '../controllers/userController.js';
 import authMiddleware from '../middleware/auth.js';
 
 const userRouter = express.Router();
@@ -24,5 +24,8 @@ userRouter.post('/status', updateUserStatus);
 userRouter.post('/add', addUser);
 userRouter.put('/edit', editUser);
 userRouter.delete('/delete/:id', deleteUser);
+
+userRouter.post("/addresses", authMiddleware, getAddressList);
+userRouter.post("/add-address", authMiddleware, addAddress);
 
 export default userRouter;

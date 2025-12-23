@@ -1,46 +1,126 @@
-/* phủ nền */
+/* Nền tối mờ phía sau */
 .modal-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.45);
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 2000;
-}
-
-/* khung modal */
-.modal-container {
-    width: 450px;
-    max-height: 85vh;
-    background: #fff;
-    border-radius: 12px;
-    padding: 20px;
-    overflow-y: auto;
+    z-index: 1000;
     animation: fadeIn 0.25s ease;
 }
 
-/* header */
+/* Khung Modal chính */
+.modal-container {
+    background: #fff;
+    width: 500px;
+    max-height: 90vh;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
 .modal-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
+    align-items: start;
+    margin-bottom: 20px;
+}
+
+.modal-title {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.order-id {
+    font-size: 14px;
+    color: #555;
+    background: #f1f3f5;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+    margin-top: 4px;
+    display: inline-block;
 }
 
 .close-btn {
-    font-size: 24px;
-    background: transparent;
+    background: none;
     border: none;
+    font-size: 28px;
+    line-height: 1;
     cursor: pointer;
-    color: #333;
+    color: #999;
+    transition: 0.2s;
 }
 
 .close-btn:hover {
     color: #ff4d4f;
+    transform: rotate(90deg);
 }
 
-/* item */
+/* Status Section */
+.status-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #f8f9fa;
+    padding: 12px 16px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    border: 1px solid #e9ecef;
+}
+
+.status-section label {
+    font-weight: 700;
+    color: #495057;
+    font-size: 15px;
+}
+
+.status-select {
+    flex: 1;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    font-family: inherit;
+    font-size: 14px;
+}
+
+/* Màu sắc trạng thái */
+.status-select.preparing {
+    background: #fff3cd;
+    color: #856404;
+    border-color: #ffeeba;
+}
+
+.status-select.delivering {
+    background: #cce5ff;
+    color: #004085;
+    border-color: #b8daff;
+}
+
+.status-select.completed {
+    background: #d4edda;
+    color: #155724;
+    border-color: #c3e6cb;
+}
+
+.status-select.canceled {
+    background: #f8d7da;
+    color: #721c24;
+    border-color: #f5c6cb;
+}
+
+/* Food List */
 .food-list {
     display: flex;
     flex-direction: column;
@@ -49,97 +129,127 @@
 
 .food-item {
     display: flex;
-    gap: 12px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid #eee;
+    gap: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px dashed #e9ecef;
 }
 
-/* hình món */
-.food-img {
-    width: 80px;
-    height: 80px;
+.food-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.food-thumb {
+    position: relative;
+    width: 72px;
+    height: 72px;
+    flex-shrink: 0;
+}
+
+.food-thumb img {
+    width: 100%;
+    height: 100%;
     object-fit: cover;
-    border-radius: 8px;
+    border-radius: 12px;
+    border: 1px solid #f1f3f5;
 }
 
-/* info */
+.qty-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: #ff6347;
+    color: white;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    border: 2px solid #fff;
+}
+
 .food-info {
     flex: 1;
 }
 
-.food-name {
+.food-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 6px;
+}
+
+.food-header h4 {
     margin: 0;
-    font-size: 17px;
-    font-weight: 600;
+    font-size: 16px;
+    font-weight: 700;
+    color: #343a40;
+    line-height: 1.4;
 }
 
-.food-sub {
-    margin: 2px 0;
-    font-size: 14px;
-}
-
-.food-qty,
 .food-price {
-    margin: 4px 0;
-    font-size: 14px;
-    font-weight: 600;
+    font-weight: 700;
+    color: #212529;
+    font-size: 15px;
+    white-space: nowrap;
+    margin-left: 10px;
 }
 
-/* animation */
+.food-details p {
+    margin: 3px 0;
+    font-size: 13px;
+    color: #495057;
+    line-height: 1.5;
+}
+
+.food-details span {
+    font-weight: 600;
+    color: #868e96;
+    margin-right: 4px;
+}
+
+.food-note {
+    margin-top: 6px !important;
+    background: #fff5f5;
+    padding: 6px 10px;
+    border-radius: 6px;
+    color: #e03131 !important;
+    font-style: italic;
+    border-left: 3px solid #ff8787;
+    display: inline-block;
+}
+
+/* Footer */
+.modal-footer {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 2px solid #f1f3f5;
+}
+
+.total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 18px;
+    font-weight: 700;
+    color: #212529;
+}
+
+.total-price {
+    color: #212529;
+    font-size: 24px;
+    letter-spacing: -0.5px;
+}
+
+/* Animation */
 @keyframes fadeIn {
     from {
         opacity: 0;
-        transform: translateY(-6px);
+        transform: scale(0.96);
     }
 
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: scale(1);
     }
-}
-
-.status-select {
-    padding: 6px 10px;
-    border-radius: 6px;
-    border: none;
-    font-weight: bold;
-    color: #fff;
-}
-
-/* Màu trạng thái */
-.status-select.preparing {
-    background: #ffb300;
-    /* vàng Grab */
-}
-
-.status-select.delivering {
-    background: #007bff;
-    /* xanh Baemin */
-}
-
-.status-select.completed {
-    background: #00c853;
-    /* xanh hoàn thành */
-}
-
-.status-select.canceled {
-    background: #d32f2f;
-    /* đỏ hủy */
-}
-
-/* in hóa đơn */
-.invoice-btn {
-    margin-top: 15px;
-    width: 100%;
-    padding: 10px;
-    background: #673ab7;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-size: 15px;
-    cursor: pointer;
-}
-
-.invoice-btn:hover {
-    opacity: 0.9;
 }

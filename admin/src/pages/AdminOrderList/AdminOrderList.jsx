@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import OrderDetailModal from "../../components/Features/OrderDetailModal/OrderDetailModal";
 import StatusBadge from "../../components/StatusBadge/StatusBadge";
 import "../../components/StatusBadge/StatusBadge.css";
+import { io } from "socket.io-client";
 import {
   getProvinceName,
   getDistrictName,
@@ -29,7 +30,7 @@ const AdminOrderList = () => {
       const res = await fetch("http://localhost:4000/api/order/admin/orders");
       const data = await res.json();
       if (data.success) {
-        setOrders(data.orders.reverse());
+        setOrders(data.orders);
         setFilteredOrders(data.orders);
       }
     } catch (error) {
@@ -41,7 +42,37 @@ const AdminOrderList = () => {
     fetchOrders();
   }, []);
 
-  // 2. Logic Lọc & Reset trang
+  // 2. useEffect để lắng nghe Socket
+  useEffect(() => {
+    const socket = io("http://localhost:4000");
+
+    // Listener 1: Đơn mới
+    socket.on("new_order", () => {
+      fetchOrders();
+    });
+
+    // Listener 2: Thanh toán thành công
+    socket.on("payment_updated", (updatedInfo) => {
+      setOrders((prev) =>
+        prev.map((o) =>
+          o._id === updatedInfo.orderId
+            ? { ...o, paymentStatus: "paid", payment: true }
+            : o
+        )
+      );
+      setFilteredOrders((prev) =>
+        prev.map((o) =>
+          o._id === updatedInfo.orderId
+            ? { ...o, paymentStatus: "paid", payment: true }
+            : o
+        )
+      );
+    });
+
+    return () => socket.disconnect();
+  }, []);
+
+  // 3. Logic Lọc & Reset trang
   useEffect(() => {
     let result = orders;
 
@@ -63,7 +94,7 @@ const AdminOrderList = () => {
     setCurrentPage(1);
   }, [orders, statusFilter, searchTerm]);
 
-  // 3. Phân trang
+  // 4. Phân trang
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentOrders = filteredOrders.slice(indexOfFirstItem, indexOfLastItem);
@@ -122,15 +153,11 @@ const AdminOrderList = () => {
               <th>Khách hàng</th>
               <th>Địa chỉ giao hàng</th>
               <th>Ngày đặt</th>
-
               <th>PTTT</th>
               <th>Thanh toán</th>
-
               <th className="text-end">Tổng tiền</th>
-              {/* ✅ MỞ LẠI CỘT GIẢM GIÁ */}
               <th className="text-end">Giảm giá</th>
               <th className="text-end">Thực thu</th>
-
               <th>Trạng thái</th>
               <th>Hành động</th>
             </tr>
@@ -143,7 +170,6 @@ const AdminOrderList = () => {
                 const subtotal = o.amount || 0;
                 const shipping = o.shippingFee || 20000;
                 const discount = o.discountAmount || 0;
-                // Thực thu = Tổng tiền + Ship - Giảm giá
                 const finalTotal = Math.max(0, subtotal + shipping - discount);
 
                 return (
@@ -161,13 +187,26 @@ const AdminOrderList = () => {
 
                     <td style={{ maxWidth: "200px" }}>
                       <div className="address-cell">
-                        <span>{o.address?.street}</span>
+                        <span className="fw-bold">{o.address?.street}</span>
                         <small
                           className="text-muted"
-                          style={{ display: "block", lineHeight: "1.2" }}
+                          style={{
+                            display: "block",
+                            lineHeight: "1.4",
+                            marginTop: "4px",
+                          }}
                         >
-                          {getWardName(o.address?.wardCode)},{" "}
-                          {getDistrictName(o.address?.districtCode)}
+                          {o.address?.ward
+                            ? o.address.ward
+                            : getWardName(String(o.address?.wardCode))}
+                          ,{/* Dòng Quận/Huyện */}
+                          {o.address?.district
+                            ? o.address.district
+                            : getDistrictName(String(o.address?.districtCode))}
+                          ,{/* Dòng Tỉnh/Thành */}
+                          {o.address?.city
+                            ? o.address.city
+                            : getProvinceName(String(o.address?.cityCode))}
                         </small>
                       </div>
                     </td>
@@ -186,7 +225,6 @@ const AdminOrderList = () => {
                       </div>
                     </td>
 
-                    {/* CỘT 1: Phương thức thanh toán */}
                     <td>
                       <span
                         className={`payment-badge ${
@@ -199,7 +237,6 @@ const AdminOrderList = () => {
                       </span>
                     </td>
 
-                    {/* CỘT 2: Trạng thái thanh toán */}
                     <td>
                       {o.paymentStatus === "paid" ? (
                         <span className="status-paid">Đã thanh toán</span>
@@ -208,12 +245,10 @@ const AdminOrderList = () => {
                       )}
                     </td>
 
-                    {/* Tổng tiền hàng + Ship */}
                     <td className="text-end">
                       {(subtotal + shipping).toLocaleString()}đ
                     </td>
 
-                    {/* ✅ CỘT GIẢM GIÁ (MỚI BỔ SUNG) */}
                     <td className="text-end">
                       {discount > 0 ? (
                         <div
@@ -245,7 +280,6 @@ const AdminOrderList = () => {
                       )}
                     </td>
 
-                    {/* Thực thu */}
                     <td className="text-end">
                       <span
                         style={{
@@ -275,8 +309,7 @@ const AdminOrderList = () => {
               })
             ) : (
               <tr>
-                {/* Tăng colSpan lên 12 vì bảng hiện tại khá nhiều cột */}
-                <td colSpan="12" className="empty-row">
+                <td colSpan="11" className="empty-row">
                   Không có đơn hàng nào.
                 </td>
               </tr>

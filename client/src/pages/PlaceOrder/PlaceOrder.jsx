@@ -1,7 +1,8 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { StoreContext } from "../../contexts/StoreContext";
 import { useNavigate } from "react-router-dom";
 import useOrder from "../../hooks/useOrder";
+import axios from "axios";
 
 // Components
 import InfoPayment from "../../components/InfoCheckout/InfoPayment";
@@ -12,18 +13,20 @@ import "./PlaceOrder.css";
 
 const PlaceOrder = () => {
   const navigate = useNavigate();
-  const { voucher } = useContext(StoreContext);
+  const { voucher, token, url, clearCart, cartItems } =
+    useContext(StoreContext);
   const { placeOrder, loading } = useOrder();
 
-  // --- STATE QUẢN LÝ FORM ---
+  // --- STATE ---
   const [addressData, setAddressData] = useState({
     street: "",
-    cityCode: "",
-    districtCode: "",
-    wardCode: "",
-    selectedId: null,
+    city: "",
+    district: "",
+    ward: "",
+    selectedId: null, // Chỉ cần gửi cái này nếu chọn từ sổ địa chỉ
     note: "",
   });
+
   const [customerData, setCustomerData] = useState({
     name: "",
     phone: "",
@@ -31,61 +34,125 @@ const PlaceOrder = () => {
   });
   const [paymentMethod, setPaymentMethod] = useState("cod");
 
+  // Sổ địa chỉ
+  const [savedAddresses, setSavedAddresses] = useState([]);
+  const [saveAddress, setSaveAddress] = useState(false);
+
+  // 1. LOAD ĐỊA CHỈ KHI VÀO TRANG
+  useEffect(() => {
+    if (token) {
+      axios
+        .post(
+          `${url}/api/user/addresses`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        )
+        .then((res) => {
+          if (res.data.success) {
+            setSavedAddresses(res.data.list || []);
+            // Tự động chọn địa chỉ mặc định
+            const defaultAddr = res.data.list.find((a) => a.isDefault);
+            if (defaultAddr) {
+              setAddressData({
+                ...defaultAddr,
+                selectedId: defaultAddr.id,
+              });
+              setCustomerData((prev) => ({
+                ...prev,
+                name: defaultAddr.name || prev.name,
+                phone: defaultAddr.phone || prev.phone,
+              }));
+            }
+          }
+        })
+        .catch((err) => console.error(err));
+    }
+  }, [token, url]);
+
   // --- XỬ LÝ ĐẶT HÀNG ---
   const handlePlaceOrder = async () => {
-    // 1. Validate đơn giản
-    if (!addressData.street || !customerData.name || !customerData.phone) {
-      alert("Vui lòng điền đầy đủ thông tin giao hàng!");
+    // 1. Validate Form
+    if (!customerData.name || !customerData.phone) {
+      alert("Vui lòng nhập tên và số điện thoại người nhận!");
       return;
     }
 
-    // 2. Gọi API tạo đơn (thông qua custom hook useOrder)
-    const response = await placeOrder({
-      addressData,
-      customerData,
-      paymentMethod,
-      voucher,
-    });
+    // --- [ĐÃ SỬA] Thay biến 'data' thành 'addressData' để debug ---
+    console.log("🔍 DEBUG - Dữ liệu địa chỉ hiện tại:", addressData);
 
-    // 3. Xử lý kết quả trả về
-    if (response && response.success) {
-      const { orderId, paymentUrl } = response;
-
-      // ---------------------------------------------------------
-      // 🛑 A. GIẢ LẬP MOMO (Tự động thành công sau 5s)
-      // ---------------------------------------------------------
-      if (paymentMethod === "momo") {
-        alert(
-          `[MÔ PHỎNG MOMO] Hệ thống đang xử lý thanh toán... Vui lòng đợi 5 giây.`
-        );
-
-        setTimeout(() => {
-          // Tự động điều hướng kèm resultCode=0 (Giả lập MoMo trả về thành công)
-          navigate(`/verify?orderId=${orderId}&resultCode=0`);
-        }, 5000);
-        return; // Dừng hàm, không làm gì thêm
-      }
-
-      // ---------------------------------------------------------
-      // 🛑 B. THANH TOÁN ONLINE KHÁC (ZaloPay, Stripe...)
-      // ---------------------------------------------------------
-      if (paymentUrl) {
-        // Chuyển hướng người dùng sang trang thanh toán thật
-        window.location.replace(paymentUrl);
+    // Nếu KHÔNG chọn địa chỉ có sẵn, bắt buộc phải nhập tay đủ 3 cấp
+    if (!addressData.selectedId) {
+      // Kiểm tra kỹ từng trường xem cái nào bị thiếu
+      if (!addressData.street || !addressData.city || !addressData.district) {
+        // Log chi tiết lỗi ra console để bạn biết thiếu cái nào
+        console.error("❌ Thiếu thông tin địa chỉ:", {
+          street: addressData.street,
+          city: addressData.city,
+          district: addressData.district,
+        });
+        alert("Vui lòng nhập đầy đủ địa chỉ giao hàng (Tỉnh, Quận, Phường)!");
         return;
       }
+    }
 
-      // ---------------------------------------------------------
-      // 🛑 C. THANH TOÁN COD (Tiền mặt)
-      // ---------------------------------------------------------
-      // Chuyển qua trang Verify để đảm bảo Frontend xóa giỏ hàng đồng bộ
-      navigate(`/verify?orderId=${orderId}&status=success`);
+    // 2. Lưu địa chỉ mới (Nếu user tick chọn)
+    // Logic này giữ ở FE là hợp lý vì nó là hành động "Thêm vào sổ địa chỉ"
+    if (token && saveAddress && !addressData.selectedId) {
+      try {
+        const newAddr = {
+          label: "Địa chỉ mới",
+          name: customerData.name,
+          phone: customerData.phone,
+          street: addressData.street,
+          city: addressData.city,
+          district: addressData.district,
+          ward: addressData.ward,
+        };
+        await axios.post(
+          `${url}/api/user/add-address`,
+          { address: newAddr },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } catch (e) {
+        console.error("Lỗi lưu địa chỉ", e);
+      }
+    }
+
+    // 3. Gọi API tạo đơn (GỬI DỮ LIỆU THÔ)
+    // Backend sẽ tự lo việc tìm địa chỉ chi tiết dựa trên selectedId
+    // Backend sẽ tự lo việc fix lỗi object crust trong items
+    const response = await placeOrder({
+      addressData: addressData,
+      customerData: customerData,
+      paymentMethod: paymentMethod,
+      voucher: voucher,
+      items: cartItems, // Gửi nguyên cartItems, không cần map sửa lỗi
+    });
+
+    // 4. Xử lý kết quả
+    if (response && response.success) {
+      clearCart();
+      const { orderId, paymentUrl } = response;
+
+      if (
+        paymentMethod === "momo" ||
+        paymentMethod === "zalopay" ||
+        paymentMethod === "stripe"
+      ) {
+        // Xử lý chuyển trang thanh toán
+        if (paymentUrl) window.location.replace(paymentUrl);
+        else alert("Lỗi lấy link thanh toán");
+      } else {
+        navigate(`/verify?orderId=${orderId}&status=success`);
+      }
+    } else {
+      // Handle error msg if needed
+      if (response?.msg) alert(response.msg);
     }
   };
 
   return (
     <div className="placeorder-page">
-      {/* Header Quay lại */}
       <div className="placeorder-nav">
         <button className="btn-back" onClick={() => navigate(-1)}>
           <FiArrowLeft /> Trở lại
@@ -95,7 +162,6 @@ const PlaceOrder = () => {
       </div>
 
       <div className="placeorder-layout">
-        {/* === CỘT TRÁI: FORM NHẬP LIỆU === */}
         <div className="layout-left">
           <InfoPayment
             addressData={addressData}
@@ -104,10 +170,13 @@ const PlaceOrder = () => {
             setCustomerData={setCustomerData}
             paymentMethod={paymentMethod}
             setPaymentMethod={setPaymentMethod}
+            savedAddresses={savedAddresses}
+            saveAddress={saveAddress}
+            setSaveAddress={setSaveAddress}
+            isLoggedIn={!!token}
           />
         </div>
 
-        {/* === CỘT PHẢI: VOUCHER & TỔNG TIỀN === */}
         <div className="layout-right">
           <CartVoucher />
           <OrderSummary onPlaceOrder={handlePlaceOrder} loading={loading} />

@@ -5,30 +5,31 @@ export default function useFoodPopup(food, mode, itemIndex, onClose) {
   const { addToCart, updateCartItem } = useContext(StoreContext);
   const popupRef = useRef(null);
 
-  // === STATE ===
-  const [quantity, setQuantity] = useState(mode === "edit" ? food.quantity : 1);
+  // === 🟢 1. XÁC ĐỊNH DỮ LIỆU GỐC (QUAN TRỌNG) ===
+  // Nếu đang Edit: food là Cart Item -> Dữ liệu giá nằm trong food.product (hoặc food.productId)
+  // Nếu đang Add: food chính là Product -> Dữ liệu giá nằm ngay tại food
+  const productData = food?.product || food?.productId || food || {};
 
-  // SIZE: Mặc định là "Vừa" (tương ứng với M)
+  // === STATE ===
+  const [quantity, setQuantity] = useState(mode === "edit" ? (food.quantity || 1) : 1);
+
   const [selectedSize, setSelectedSize] = useState(
-    mode === "edit" ? food.size : "Vừa"
+    mode === "edit" ? (food.size || "Vừa") : "Vừa"
   );
 
-  // CRUST
+  // Logic chọn Crust: Nếu edit thì lấy cái đã chọn, nếu add thì lấy cái đầu tiên trong list
   const [selectedCrust, setSelectedCrust] = useState(
     mode === "edit"
-      ? food.crust || null
-      : food.crust?.list?.[0] || null // Mặc định chọn loại đế đầu tiên
+      ? (food.crust || null)
+      : (productData.crust?.list?.[0] || null)
   );
 
-  // TOPPINGS
   const [selectedToppings, setSelectedToppings] = useState(
-    mode === "edit" ? food.toppings || [] : []
+    mode === "edit" ? (food.toppings || []) : []
   );
 
-  // NOTE
-  const [note, setNote] = useState(mode === "edit" ? food.note : "");
+  const [note, setNote] = useState(mode === "edit" ? (food.note || "") : "");
   
-  // TOTAL PRICE (State này sẽ được tính toán tự động)
   const [totalPrice, setTotalPrice] = useState(0);
 
   // AUTO FOCUS & CLOSE ON ESC
@@ -39,25 +40,19 @@ export default function useFoodPopup(food, mode, itemIndex, onClose) {
     return () => document.removeEventListener("keydown", handleKey);
   }, [onClose]);
 
-  // SYNC WHEN EDIT MODE
+  // SYNC WHEN EDIT MODE (Đồng bộ dữ liệu khi mở popup sửa)
   useEffect(() => {
     if (mode === "edit" && food) {
-      // 🟢 LOGIC MỚI: Ưu tiên lấy dữ liệu từ CartItem truyền sang (user_...)
-      // Nếu không có (trường hợp view thường) thì lấy mặc định
-      
+      // Ưu tiên lấy dữ liệu đã lưu trong Cart Item
       setSelectedSize(food.user_size || food.size || "Vừa");
-      
       setSelectedCrust(food.user_crust || food.crust || null);
-      
       setSelectedToppings(food.user_toppings || food.toppings || []);
-      
       setQuantity(food.user_quantity || food.quantity || 1);
-      
       setNote(food.user_note || food.note || "");
     }
   }, [mode, food]);
 
-  // 👉 Toggle topping
+  // Toggle topping
   const toggleTopping = (opt) => {
     setSelectedToppings((prev) => {
       const exists = prev.some((t) => t.label === opt.label);
@@ -66,69 +61,94 @@ export default function useFoodPopup(food, mode, itemIndex, onClose) {
     });
   };
 
-  // 👉 TÍNH GIÁ TIỀN (QUAN TRỌNG: LOGIC MỚI)
+  // === 🟢 2. LOGIC TÍNH TIỀN ĐÃ FIX ===
   useEffect(() => {
-    if (!food) return;
+    // Hàm phụ trợ: Ép kiểu giá tiền an toàn (xử lý cả chuỗi "49.000" và số)
+    const parsePrice = (val) => {
+        if (typeof val === 'number') return val;
+        if (typeof val === 'string') {
+            const cleanString = val.replace(/[^0-9]/g, ''); 
+            return Number(cleanString) || 0;
+        }
+        return 0;
+    };
 
-    // 1. Map tên Size (UI) sang Key (DB)
+    // Nếu không có dữ liệu sản phẩm gốc thì không tính được
+    if (!productData || Object.keys(productData).length === 0) return;
+
+    // A. Map tên Size -> Key
     const sizeMap = { "Nhỏ": "S", "Vừa": "M", "Lớn": "L" };
-    const currentSizeKey = sizeMap[selectedSize] || "M"; // Fallback là M
+    const currentSizeKey = sizeMap[selectedSize] || "M";
 
-    // 2. Tính giá gốc (Base Price)
-    let basePrice = food.price; // Giá mặc định
+    // B. Tính giá gốc (Base Price) dựa trên productData
+    let basePrice = parsePrice(productData.price); 
     
-    // Nếu DB dùng cấu trúc sizes: { S:..., M:..., L:... }
-    if (food.sizes && typeof food.sizes === 'object' && food.sizes[currentSizeKey] !== undefined) {
-        basePrice = food.sizes[currentSizeKey];
+    // Kiểm tra xem sản phẩm có bảng giá theo size không?
+    if (productData.sizes && typeof productData.sizes === 'object') {
+        const sizePrice = productData.sizes[currentSizeKey];
+        if (sizePrice !== undefined && sizePrice !== null) {
+            const parsedSizePrice = parsePrice(sizePrice);
+            // Chỉ lấy giá size nếu nó > 0 (tránh trường hợp size=0 trong DB)
+            if (parsedSizePrice > 0) {
+                 basePrice = parsedSizePrice;
+            }
+        }
     } else {
-        // Fallback logic cũ (nếu dữ liệu chưa migration)
+        // Fallback logic cũ (nếu không có bảng sizes trong DB)
         if (selectedSize === "Lớn") basePrice *= 1.35;
         else if (selectedSize === "Nhỏ") basePrice *= 0.8;
     }
 
-    // 3. Tính giá Đế bánh (Crust) - Theo Size
+    // C. Tính giá Đế bánh (Crust)
     let crustPrice = 0;
     if (selectedCrust) {
-        // Nếu crust có cấu trúc prices: { S, M, L }
-        if (selectedCrust.prices && selectedCrust.prices[currentSizeKey] !== undefined) {
-            crustPrice = selectedCrust.prices[currentSizeKey];
-        } 
-        // Fallback cũ: selectedCrust.price
-        else if (selectedCrust.price) {
-            crustPrice = selectedCrust.price;
+        // Cố gắng tìm lại thông tin đế bánh mới nhất từ productData
+        const originalCrust = productData.crust?.list?.find(c => c.label === selectedCrust.label);
+        const crustSource = originalCrust || selectedCrust;
+
+        if (crustSource.prices && crustSource.prices[currentSizeKey] !== undefined) {
+            crustPrice = parsePrice(crustSource.prices[currentSizeKey]);
+        } else if (crustSource.price) {
+            crustPrice = parsePrice(crustSource.price);
         }
     }
 
-    // 4. Tính giá Topping
-    const toppingsPrice = selectedToppings.reduce((sum, t) => sum + (Number(t.price) || 0), 0);
+    // D. Tính giá Topping
+    const toppingsPrice = selectedToppings.reduce((sum, t) => sum + parsePrice(t.price), 0);
 
-    // 5. Tổng đơn giá
+    // E. Tổng tiền
     const unitPrice = Math.round(basePrice + crustPrice + toppingsPrice);
-    
     setTotalPrice(unitPrice * quantity);
 
-  }, [food, selectedSize, selectedCrust, selectedToppings, quantity]);
+    // Console log để debug nếu vẫn sai
+    // console.log("Debug Price:", { basePrice, crustPrice, toppingsPrice, unitPrice });
+
+  }, [productData, selectedSize, selectedCrust, selectedToppings, quantity]); // 🟢 Dependency thay đổi thành productData
 
 
-  // 👉 Xác nhận (Thêm vào giỏ)
-  const handleConfirm = () => {
-    // Tính lại unit price để lưu vào giỏ (tránh lưu tổng tiền cục bộ)
-    const unitPrice = totalPrice / quantity;
+const handleConfirm = () => {
+    // Lấy ID gốc của sản phẩm
+    const finalId = productData._id || food._id; 
+    
+    // 🟢 FIX LỖI: Kiểm tra kỹ Cruts/Topping trước khi lưu
+    // Chỉ lưu crust nếu nó thực sự tồn tại và có tên (label)
+    // Giúp tránh trường hợp lưu object rỗng {} hoặc null làm hiển thị sai ở giỏ hàng
+    const finalCrust = (selectedCrust && selectedCrust.label) ? selectedCrust : null;
 
     const payload = {
-      _id: food._id,
-      name: food.name,
-      image: food.image,
-      price: food.price, // Giá gốc tham khảo
+      _id: finalId,
+      name: productData.name || food.name,
+      image: productData.image || food.image,
+      price: productData.price || food.price, 
 
       size: selectedSize,
-      crust: selectedCrust, // Lưu cả object crust (để sau này biết nó là đế gì, giá bao nhiêu)
+      
+      // Sử dụng biến đã lọc sạch này
+      crust: finalCrust, 
+      
       toppings: selectedToppings,
-
       note,
       quantity,
-      
-      // Lưu totalPrice chính xác do Client tính (để hiển thị ngay lập tức)
       totalPrice: totalPrice, 
     };
 
@@ -148,7 +168,7 @@ export default function useFoodPopup(food, mode, itemIndex, onClose) {
     selectedCrust, setSelectedCrust,
     selectedToppings, toggleTopping,
     note, setNote,
-    totalPrice, // Trả về state đã tính toán
+    totalPrice,
     handleConfirm,
   };
 }

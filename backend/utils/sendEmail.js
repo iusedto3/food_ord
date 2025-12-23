@@ -19,8 +19,8 @@ export const sendEmail = async (order) => {
   const paymentMethodText = order.paymentMethod === 'cod' ? 'Tiền mặt (COD)' : order.paymentMethod.toUpperCase();
   
   const paymentStatusHtml = isPaid 
-    ? `<p style="color: green; font-weight: bold;">✅ Đã thanh toán thành công qua ${paymentMethodText}</p>`
-    : `<p style="color: orange; font-weight: bold;">⏳ Thanh toán khi nhận hàng (${paymentMethodText})</p>`;
+    ? `<p style="color: green; font-weight: bold;"> Đã thanh toán thành công qua ${paymentMethodText}</p>`
+    : `<p style="color: orange; font-weight: bold;"> Thanh toán khi nhận hàng (${paymentMethodText})</p>`;
 
   // 2. Tính lại tổng cộng (để chắc chắn)
   const subtotal = order.amount || 0;
