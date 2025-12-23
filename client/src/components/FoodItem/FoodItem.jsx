@@ -1,15 +1,36 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useMemo } from "react";
 import "./FoodItem.css";
 import { StoreContext } from "../../contexts/StoreContext";
 import { formatVND } from "../../utils/format";
 
-const FoodItem = ({ id, name, price, description, image, onClick }) => {
+// 🟢 Nhận thêm prop 'sizes'
+const FoodItem = ({ id, name, price, description, image, sizes, onClick }) => {
   const { addToCart, backendUrl } = useContext(StoreContext);
   const [loaded, setLoaded] = useState(false);
 
+  // 🟢 LOGIC MỚI: Tính giá hiển thị
+  // Nếu có sizes, tìm giá thấp nhất trong các size (S, M, L) để hiển thị "Chỉ từ..."
+  // Nếu không có sizes, dùng giá gốc (price)
+  const displayPrice = useMemo(() => {
+    if (sizes && typeof sizes === "object") {
+      // Lấy tất cả giá trị tiền từ object sizes, loại bỏ giá trị 0 hoặc null
+      const prices = Object.values(sizes).filter(
+        (p) => typeof p === "number" && p > 0
+      );
+      if (prices.length > 0) {
+        return Math.min(...prices); // Lấy giá nhỏ nhất
+      }
+    }
+    return price; // Fallback về giá gốc
+  }, [sizes, price]);
+
   const flyToCart = (e) => {
+    // ... (Giữ nguyên logic hiệu ứng bay)
     const cart = document.querySelector(".navbar-cart");
-    const imgToFly = e.target.closest(".food-item").querySelector(".food-item-img");
+    const imgToFly = e.target
+      .closest(".food-item")
+      .querySelector(".food-item-img");
+    if (!imgToFly || !cart) return; // Safety check
 
     const imgClone = imgToFly.cloneNode(true);
     const rect = imgToFly.getBoundingClientRect();
@@ -40,7 +61,6 @@ const FoodItem = ({ id, name, price, description, image, onClick }) => {
 
   return (
     <div className="food-item horizontal" onClick={onClick}>
-      {/* Ảnh */}
       <div className="food-item-img-container round-img">
         {!loaded && <div className="skeleton skeleton-img" />}
         <img
@@ -51,7 +71,6 @@ const FoodItem = ({ id, name, price, description, image, onClick }) => {
         />
       </div>
 
-      {/* Nội dung */}
       <div className="food-item-info">
         <h3 className="food-item-name">{name}</h3>
         <p className="food-item-desc">{description}</p>
@@ -59,7 +78,8 @@ const FoodItem = ({ id, name, price, description, image, onClick }) => {
         <div className="food-item-bottom">
           <div className="food-item-price-section">
             <span className="food-item-price-label">Chỉ từ</span>
-            <span className="food-item-price">{formatVND(price)}</span>
+            {/* 🟢 Hiển thị giá đã tính toán */}
+            <span className="food-item-price">{formatVND(displayPrice)}</span>
           </div>
 
           <button
@@ -69,7 +89,7 @@ const FoodItem = ({ id, name, price, description, image, onClick }) => {
               addToCart({
                 _id: id,
                 name,
-                price,
+                price, // Vẫn gửi giá gốc vào giỏ (Logic giỏ sẽ tự xử lý lại sau)
                 image,
                 description,
                 quantity: 1,

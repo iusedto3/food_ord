@@ -8,13 +8,8 @@ const Navbar = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    // 🧹 Xoá token trong localStorage
     localStorage.removeItem("adminToken");
-
-    // 🧭 Chuyển về trang đăng nhập
     navigate("/login");
-
-    // 🪄 Thông báo nhỏ
     toast.success("Đã đăng xuất thành công!");
   };
 

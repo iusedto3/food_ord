@@ -2,7 +2,7 @@ import React, { useState, useContext, useEffect } from "react";
 import { StoreContext } from "../../contexts/StoreContext";
 import { useNavigate } from "react-router-dom";
 import useOrder from "../../hooks/useOrder";
-import axios from "axios"; // Import axios để gọi API lấy địa chỉ
+import axios from "axios";
 
 // Components
 import InfoPayment from "../../components/InfoCheckout/InfoPayment";
@@ -13,19 +13,17 @@ import "./PlaceOrder.css";
 
 const PlaceOrder = () => {
   const navigate = useNavigate();
-  const { voucher, token, url, clearCart } = useContext(StoreContext); // Lấy token & url
+  const { voucher, token, url, clearCart, cartItems } =
+    useContext(StoreContext);
   const { placeOrder, loading } = useOrder();
 
-  // --- STATE ĐỊA CHỈ ---
+  // --- STATE ---
   const [addressData, setAddressData] = useState({
     street: "",
-    cityCode: "",
-    districtCode: "",
-    wardCode: "",
     city: "",
     district: "",
-    ward: "", // Lưu tên
-    selectedId: null, // ID của địa chỉ đã chọn (nếu có)
+    ward: "",
+    selectedId: null, // Chỉ cần gửi cái này nếu chọn từ sổ địa chỉ
     note: "",
   });
 
@@ -36,11 +34,11 @@ const PlaceOrder = () => {
   });
   const [paymentMethod, setPaymentMethod] = useState("cod");
 
-  // 🟢 STATE MỚI: SỔ ĐỊA CHỈ & CHECKBOX LƯU
+  // Sổ địa chỉ
   const [savedAddresses, setSavedAddresses] = useState([]);
   const [saveAddress, setSaveAddress] = useState(false);
 
-  // 1. LOAD ĐỊA CHỈ KHI VÀO TRANG (Chỉ User)
+  // 1. LOAD ĐỊA CHỈ KHI VÀO TRANG
   useEffect(() => {
     if (token) {
       axios
@@ -51,16 +49,14 @@ const PlaceOrder = () => {
         )
         .then((res) => {
           if (res.data.success) {
-            setSavedAddresses(res.data.list);
-            // Tự động chọn địa chỉ mặc định (nếu có)
+            setSavedAddresses(res.data.list || []);
+            // Tự động chọn địa chỉ mặc định
             const defaultAddr = res.data.list.find((a) => a.isDefault);
             if (defaultAddr) {
-              // Fill dữ liệu vào form
               setAddressData({
                 ...defaultAddr,
                 selectedId: defaultAddr.id,
               });
-              // Fill thông tin người nhận luôn
               setCustomerData((prev) => ({
                 ...prev,
                 name: defaultAddr.name || prev.name,
@@ -75,13 +71,32 @@ const PlaceOrder = () => {
 
   // --- XỬ LÝ ĐẶT HÀNG ---
   const handlePlaceOrder = async () => {
-    // 1. Validate
-    if (!addressData.street || !customerData.name || !customerData.phone) {
-      alert("Vui lòng điền đầy đủ thông tin giao hàng!");
+    // 1. Validate Form
+    if (!customerData.name || !customerData.phone) {
+      alert("Vui lòng nhập tên và số điện thoại người nhận!");
       return;
     }
 
-    // 🟢 2. LƯU ĐỊA CHỈ MỚI (Nếu user tick chọn và đang nhập mới)
+    // --- [ĐÃ SỬA] Thay biến 'data' thành 'addressData' để debug ---
+    console.log("🔍 DEBUG - Dữ liệu địa chỉ hiện tại:", addressData);
+
+    // Nếu KHÔNG chọn địa chỉ có sẵn, bắt buộc phải nhập tay đủ 3 cấp
+    if (!addressData.selectedId) {
+      // Kiểm tra kỹ từng trường xem cái nào bị thiếu
+      if (!addressData.street || !addressData.city || !addressData.district) {
+        // Log chi tiết lỗi ra console để bạn biết thiếu cái nào
+        console.error("❌ Thiếu thông tin địa chỉ:", {
+          street: addressData.street,
+          city: addressData.city,
+          district: addressData.district,
+        });
+        alert("Vui lòng nhập đầy đủ địa chỉ giao hàng (Tỉnh, Quận, Phường)!");
+        return;
+      }
+    }
+
+    // 2. Lưu địa chỉ mới (Nếu user tick chọn)
+    // Logic này giữ ở FE là hợp lý vì nó là hành động "Thêm vào sổ địa chỉ"
     if (token && saveAddress && !addressData.selectedId) {
       try {
         const newAddr = {
@@ -90,13 +105,9 @@ const PlaceOrder = () => {
           phone: customerData.phone,
           street: addressData.street,
           city: addressData.city,
-          cityCode: addressData.cityCode,
           district: addressData.district,
-          districtCode: addressData.districtCode,
           ward: addressData.ward,
-          wardCode: addressData.wardCode,
         };
-        // Gọi API lưu ngầm
         await axios.post(
           `${url}/api/user/add-address`,
           { address: newAddr },
@@ -107,26 +118,36 @@ const PlaceOrder = () => {
       }
     }
 
-    // 3. Gọi API tạo đơn
+    // 3. Gọi API tạo đơn (GỬI DỮ LIỆU THÔ)
+    // Backend sẽ tự lo việc tìm địa chỉ chi tiết dựa trên selectedId
+    // Backend sẽ tự lo việc fix lỗi object crust trong items
     const response = await placeOrder({
-      addressData,
-      customerData,
-      paymentMethod,
-      voucher,
+      addressData: addressData,
+      customerData: customerData,
+      paymentMethod: paymentMethod,
+      voucher: voucher,
+      items: cartItems, // Gửi nguyên cartItems, không cần map sửa lỗi
     });
 
-    // ... (Phần xử lý redirect giữ nguyên) ...
+    // 4. Xử lý kết quả
     if (response && response.success) {
       clearCart();
-      // ... code cũ ...
       const { orderId, paymentUrl } = response;
-      if (paymentMethod === "momo") {
-        /*...*/
-      } else if (paymentUrl) {
-        window.location.replace(paymentUrl);
+
+      if (
+        paymentMethod === "momo" ||
+        paymentMethod === "zalopay" ||
+        paymentMethod === "stripe"
+      ) {
+        // Xử lý chuyển trang thanh toán
+        if (paymentUrl) window.location.replace(paymentUrl);
+        else alert("Lỗi lấy link thanh toán");
       } else {
         navigate(`/verify?orderId=${orderId}&status=success`);
       }
+    } else {
+      // Handle error msg if needed
+      if (response?.msg) alert(response.msg);
     }
   };
 
@@ -142,7 +163,6 @@ const PlaceOrder = () => {
 
       <div className="placeorder-layout">
         <div className="layout-left">
-          {/* Truyền thêm props xuống InfoPayment */}
           <InfoPayment
             addressData={addressData}
             setAddressData={setAddressData}
@@ -150,7 +170,6 @@ const PlaceOrder = () => {
             setCustomerData={setCustomerData}
             paymentMethod={paymentMethod}
             setPaymentMethod={setPaymentMethod}
-            // Props mới cho Sổ địa chỉ
             savedAddresses={savedAddresses}
             saveAddress={saveAddress}
             setSaveAddress={setSaveAddress}

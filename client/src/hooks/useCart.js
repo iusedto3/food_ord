@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
-// import { calculateItemPrice } from "../utils/pricing"; // ❌ BỎ DÒNG NÀY (Không dùng logic cũ nữa)
 
 const useCart = (url, token) => {
   const [cartItems, setCartItems] = useState([]);
@@ -12,7 +11,7 @@ const useCart = (url, token) => {
     return t ? { Authorization: `Bearer ${t}` } : {};
   };
 
-  // Lưu giỏ hàng guest
+  // Lưu giỏ hàng guest vào localStorage
   const saveGuestCart = (list) => {
     try {
       localStorage.setItem("guestCart", JSON.stringify(list));
@@ -29,7 +28,7 @@ const useCart = (url, token) => {
     }
   }, [token]);
 
-  // Load giỏ hàng User
+  // Load giỏ hàng User từ API
   const loadCartData = useCallback(async (specificToken) => {
     try {
       const t = specificToken || token || localStorage.getItem("token");
@@ -48,14 +47,12 @@ const useCart = (url, token) => {
     if (savedToken) loadCartData();
   }, [token, loadCartData]);
 
-  // ============================================================
-  // 🟢 ADD TO CART (SỬA LOGIC GUEST ĐỂ KHỚP VỚI USER)
-  // ============================================================
+  // ADD TO CART
   const addToCart = async (foodData) => {
     try {
       const t = token || localStorage.getItem("token");
 
-      // ---------------- GUEST MODE ----------------
+      // GUEST MODE
       if (!t) {
         const updated = [...cartItems];
 
@@ -64,25 +61,19 @@ const useCart = (url, token) => {
           (item) =>
             item._id === foodData._id &&
             item.size === foodData.size &&
-            // So sánh Crust & Topping chuẩn xác hơn
             JSON.stringify(item.crust) === JSON.stringify(foodData.crust) &&
             JSON.stringify(item.toppings) === JSON.stringify(foodData.toppings) &&
             item.note === foodData.note
         );
 
         if (existing) {
-          // CỘNG DỒN SỐ LƯỢNG
+          // Cộng dồn số lượng và giá tiền
           existing.quantity += foodData.quantity;
-          
-          // 🟢 FIX LỖI GIÁ: Cộng dồn totalPrice từ dữ liệu mới gửi vào
-          // (Vì foodData.totalPrice đã được tính đúng ở FoodPopup)
           existing.totalPrice = Number(existing.totalPrice) + Number(foodData.totalPrice);
-          
         } else {
-          // THÊM MỚI
+          // Thêm món mới
           updated.push({
             ...foodData,
-            // Đảm bảo lưu đúng giá tổng mà FoodPopup gửi sang
             totalPrice: Number(foodData.totalPrice), 
           });
         }
@@ -92,8 +83,7 @@ const useCart = (url, token) => {
         return;
       }
 
-      // ---------------- USER MODE ----------------
-      // Gửi foodData (đã bao gồm totalPrice đúng) lên Server
+      // USER MODE
       const res = await api.post("/api/cart/add", foodData, {
         headers: getAuthHeader(),
       });
@@ -104,12 +94,12 @@ const useCart = (url, token) => {
     }
   };
 
-  // ========== REMOVE ==========
+  // REMOVE FROM CART
   const removeFromCart = async (itemIndex) => {
     try {
       const t = token || localStorage.getItem("token");
 
-      // Guest: Xóa theo index
+      // Guest
       if (!t) {
         const updated = cartItems.filter((_, idx) => idx !== itemIndex);
         setCartItems(updated);
@@ -129,7 +119,7 @@ const useCart = (url, token) => {
     }
   };
 
-  // ========== UPDATE ==========
+  // UPDATE CART ITEM
   const updateCartItem = async (index, updatedItem) => {
     try {
       const t = token || localStorage.getItem("token");
@@ -137,7 +127,7 @@ const useCart = (url, token) => {
       // Guest
       if (!t) {
         const newList = [...cartItems];
-        newList[index] = updatedItem; // updatedItem đã có totalPrice mới từ Popup
+        newList[index] = updatedItem;
         setCartItems(newList);
         saveGuestCart(newList);
         return;
@@ -155,7 +145,7 @@ const useCart = (url, token) => {
     }
   };
 
-  // ... (Merge, Clear giữ nguyên) ...
+  // MERGE GUEST CART TO USER CART
   const mergeGuestCart = async () => {
     const t = token || localStorage.getItem("token");
     if (!t) return;
@@ -175,10 +165,9 @@ const useCart = (url, token) => {
     localStorage.removeItem("guestCart");
   };
 
-  // 🟢 TÍNH TỔNG TIỀN (Dựa trên totalPrice có sẵn)
+  // GET TOTAL CART AMOUNT
   const getTotalCartAmount = () => {
     return cartItems.reduce((sum, item) => {
-      // Ưu tiên lấy totalPrice đã lưu, nếu không mới tính thủ công
       const val = item.totalPrice ? Number(item.totalPrice) : (Number(item.price) * Number(item.quantity));
       return sum + val;
     }, 0);

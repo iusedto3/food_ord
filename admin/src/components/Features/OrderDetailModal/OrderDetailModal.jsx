@@ -27,7 +27,6 @@ const OrderDetailModal = ({ order, onClose, refreshList }) => {
   return (
     <div className="modal-backdrop">
       <div className="modal-container">
-        {/* --- HEADER --- */}
         <div className="modal-header">
           <div>
             <h3 className="modal-title">Chi tiết đơn hàng</h3>
@@ -37,8 +36,6 @@ const OrderDetailModal = ({ order, onClose, refreshList }) => {
             &times;
           </button>
         </div>
-
-        {/* --- STATUS BAR (Giữ Tiếng Anh theo yêu cầu) --- */}
         <div className="status-section">
           <label>Status:</label>
           <select
@@ -53,7 +50,6 @@ const OrderDetailModal = ({ order, onClose, refreshList }) => {
           </select>
         </div>
 
-        {/* --- DANH SÁCH MÓN ĂN --- */}
         <div className="food-list">
           {order.items.map((item, i) => (
             <div className="food-item" key={i}>
@@ -83,14 +79,12 @@ const OrderDetailModal = ({ order, onClose, refreshList }) => {
                     </p>
                   )}
 
-                  {/* 🔥 Hiển thị Đế bánh (Tiếng Việt) */}
                   {item.crust && (
                     <p>
                       <span>Đế bánh:</span> {item.crust}
                     </p>
                   )}
 
-                  {/* Hiển thị Topping */}
                   {item.toppings && item.toppings.length > 0 && (
                     <p>
                       <span>Topping:</span>{" "}
@@ -98,7 +92,6 @@ const OrderDetailModal = ({ order, onClose, refreshList }) => {
                     </p>
                   )}
 
-                  {/* 🔥 Hiển thị Ghi chú (Tiếng Việt) */}
                   {item.note && (
                     <p className="food-note">Ghi chú: "{item.note}"</p>
                   )}

@@ -34,13 +34,13 @@ const orderSchema = new mongoose.Schema({
   // --- THANH TOÁN (UPDATED) ---
   paymentMethod: {
     type: String,
-    enum: ["cod", "momo", "stripe", "zalopay", "card"], // 👇 Thêm các cổng mới
+    enum: ["cod", "momo", "stripe", "zalopay"], // 👇 Thêm các cổng mới
     required: true,
   },
   
   paymentStatus: {
     type: String, 
-    enum: ["pending", "paid", "failed", "refunded"], // 👇 Quản lý trạng thái thanh toán chi tiết
+    enum: ["pending", "paid", "failed"], // 👇 Quản lý trạng thái thanh toán chi tiết
     default: "pending", 
   },
 

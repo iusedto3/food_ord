@@ -47,6 +47,7 @@ const FoodDisplay = () => {
                   name={food.name}
                   description={food.description}
                   price={food.price}
+                  sizes={food.sizes}
                   image={food.image}
                   onClick={() => handleFoodClick(food)}
                   url={url}

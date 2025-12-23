@@ -1,1 +1,1 @@
-{"scripts":{"start":"concurrently \"npm run server\" \"npm run client\"","server":"cd backend && npm run server","client":"cd client && npm run dev"},"devDependencies":{"concurrently":"^9.0.0"},"dependencies":{"@google/genai":"^1.30.0","axios":"^1.13.2","bcrypt":"^6.0.0","crypto":"^1.0.1","moment":"^2.30.1","react-router-dom":"^7.9.5","react-toastify":"^11.0.5","stripe":"^20.0.0"}}
+{"scripts":{"start":"concurrently \"npm run server\" \"npm run client\"","server":"cd backend && npm run server","client":"cd client && npm run dev"},"devDependencies":{"concurrently":"^9.0.0"}}

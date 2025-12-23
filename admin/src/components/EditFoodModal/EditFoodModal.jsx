@@ -11,29 +11,22 @@ const IMG_URL = "http://localhost:4000/images";
 const EditFoodModal = ({ foodId, onClose, onUpdated }) => {
   const [loading, setLoading] = useState(true);
 
-  // Form States
   const [name, setName] = useState("");
   const [price, setPrice] = useState(0); // Giá gốc (Size M)
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
   const [imageFile, setImageFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
-
-  // 🟢 STATE MỚI: Size là Object, không phải Array
   const [sizePrices, setSizePrices] = useState({ S: 0, M: 0, L: 0 });
-
   const [autoCalc, setAutoCalc] = useState(false); // Mặc định tắt auto khi edit để tránh nhảy giá
   const [crustEnabled, setCrustEnabled] = useState(false);
   const [crustList, setCrustList] = useState([]);
   const [options, setOptions] = useState([]); // Topping
-
-  // State tạm để thêm
   const [newOption, setNewOption] = useState({ label: "", price: "" });
   const [newCrust, setNewCrust] = useState({
     label: "",
     prices: { S: 0, M: 0, L: 0 },
   });
-
   // Load Data
   useEffect(() => {
     const fetchFood = async () => {
@@ -47,8 +40,6 @@ const EditFoodModal = ({ foodId, onClose, onUpdated }) => {
           setCategory(found.category);
           setDescription(found.description);
           if (found.image) setPreviewUrl(`${IMG_URL}/${found.image}`);
-
-          // 🟢 LOAD SIZE: Kiểm tra xem DB đang lưu kiểu cũ (mảng) hay kiểu mới (object)
           if (found.sizes && !Array.isArray(found.sizes)) {
             setSizePrices(found.sizes);
           } else {
@@ -72,7 +63,6 @@ const EditFoodModal = ({ foodId, onClose, onUpdated }) => {
     if (foodId) fetchFood();
   }, [foodId]);
 
-  // 🟢 AUTO CALC (Chỉ chạy khi bật checkbox)
   useEffect(() => {
     if (autoCalc && price > 0) {
       setSizePrices({
@@ -131,10 +121,7 @@ const EditFoodModal = ({ foodId, onClose, onUpdated }) => {
       formData.append("price", price);
       formData.append("category", category);
       formData.append("description", description);
-
-      // 🟢 Gửi Object Size
       formData.append("sizes", JSON.stringify(sizePrices));
-
       formData.append("options", JSON.stringify(options));
       formData.append("crustEnabled", crustEnabled);
       formData.append("crustList", JSON.stringify(crustList));
@@ -215,8 +202,6 @@ const EditFoodModal = ({ foodId, onClose, onUpdated }) => {
                 onChange={(e) => setDescription(e.target.value)}
               />
             </div>
-
-            {/* 🟢 KHU VỰC SIZE (SỬA LẠI HOÀN TOÀN) */}
             <div className="variant-block">
               <div
                 className="variant-header"
@@ -371,7 +356,7 @@ const EditFoodModal = ({ foodId, onClose, onUpdated }) => {
               </div>
             </div>
 
-            {/* 🟢 KHU VỰC ĐẾ BÁNH (CRUST) */}
+            {/*  KHU VỰC ĐẾ BÁNH (CRUST) */}
             <div className="variant-block">
               <div className="variant-header">
                 <label
